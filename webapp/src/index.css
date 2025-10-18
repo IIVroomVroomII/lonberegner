@@ -1,0 +1,158 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Dark Theme (Default - VS Code Style) */
+  --bg-primary: #1e1e1e;
+  --bg-secondary: #252526;
+  --bg-tertiary: #181818;
+  --bg-hover: #2a2d2e;
+  --bg-active: #37373d;
+  --bg-input: #3c3c3c;
+
+  --border-color: #454545;
+  --border-hover: #656565;
+
+  --text-primary: #d4d4d4;
+  --text-secondary: #9d9d9d;
+  --text-muted: #6a6a6a;
+
+  --accent-blue: #61afef;
+  --accent-purple: #c678dd;
+  --accent-green: #98c379;
+  --accent-yellow: #e5c07b;
+  --accent-red: #e06c75;
+  --accent-cyan: #56b6c2;
+  --accent-orange: #d19a66;
+  --accent-pink: #e691b2;
+}
+
+.light {
+  /* Light Theme */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f3f3f3;
+  --bg-tertiary: #f8f8f8;
+  --bg-hover: #eeeeee;
+  --bg-active: #e0e0e0;
+  --bg-input: #ffffff;
+
+  --border-color: #e0e0e0;
+  --border-hover: #c0c0c0;
+
+  --text-primary: #1e1e1e;
+  --text-secondary: #4d4d4d;
+  --text-muted: #9d9d9d;
+
+  /* Pastelfarver forbliver de samme */
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+}
+
+body {
+  font-family: 'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+
+/* Scrollbar Styling (VS Code Style) */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: #3c3c3c;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #4a4a4a;
+}
+
+/* Utilities */
+.compact-btn {
+  @apply px-3 py-1.5 rounded text-sm font-medium transition-all duration-150;
+  @apply border border-transparent;
+}
+
+.compact-btn-primary {
+  @apply compact-btn;
+  background-color: var(--accent-blue);
+  color: #ffffff;
+}
+
+.compact-btn-primary:hover {
+  filter: brightness(1.1);
+}
+
+.compact-btn-secondary {
+  @apply compact-btn;
+  border-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+.compact-btn-secondary:hover {
+  background-color: var(--bg-hover);
+}
+
+.card {
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 16px;
+}
+
+.card:hover {
+  border-color: var(--border-hover);
+}
+
+.input-field {
+  background-color: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  color: var(--text-primary);
+  padding: 8px 12px;
+  font-size: 14px;
+  transition: all 150ms;
+}
+
+.input-field:focus {
+  outline: none;
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 0 2px rgba(97, 175, 239, 0.2);
+}
+
+.input-field::placeholder {
+  color: var(--text-muted);
+}
+
+/* Disable number input spinners */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+}

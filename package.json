@@ -1,0 +1,40 @@
+{
+  "name": "lonberegning-system",
+  "version": "1.0.0",
+  "description": "Automatisk løn- og tidsregistreringssystem baseret på overenskomst",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "webapp",
+    "shared"
+  ],
+  "scripts": {
+    "install:all": "npm install && cd mobile && flutter pub get",
+    "dev:backend": "npm run dev --workspace=backend",
+    "dev:webapp": "npm run dev --workspace=webapp",
+    "dev:mobile": "cd mobile && flutter run",
+    "build:backend": "npm run build --workspace=backend",
+    "build:webapp": "npm run build --workspace=webapp",
+    "build:mobile": "cd mobile && flutter build apk",
+    "start:backend": "npm run start --workspace=backend",
+    "start:webapp": "npm run start --workspace=webapp",
+    "test": "npm run test --workspaces",
+    "lint": "npm run lint --workspaces",
+    "migrate:dev": "npm run migrate:dev --workspace=backend",
+    "migrate:deploy": "npm run migrate:deploy --workspace=backend",
+    "studio": "npm run studio --workspace=backend"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "keywords": [
+    "payroll",
+    "time-tracking",
+    "overenskomst",
+    "løn",
+    "tidsregistrering"
+  ],
+  "author": "",
+  "license": "MIT"
+}

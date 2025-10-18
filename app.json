@@ -1,0 +1,47 @@
+{
+  "name": "lonberegning-system",
+  "description": "Automatisk løn- og tidsregistreringssystem baseret på overenskomst",
+  "keywords": ["nodejs", "express", "prisma", "postgresql", "react", "payroll"],
+  "stack": "heroku-22",
+  "buildpacks": [
+    {
+      "url": "heroku/nodejs"
+    }
+  ],
+  "addons": [
+    {
+      "plan": "heroku-postgresql:mini"
+    }
+  ],
+  "env": {
+    "NODE_ENV": {
+      "description": "Node environment",
+      "value": "production"
+    },
+    "JWT_SECRET": {
+      "description": "Secret key for JWT tokens",
+      "generator": "secret"
+    },
+    "JWT_EXPIRES_IN": {
+      "description": "JWT expiration time",
+      "value": "7d"
+    },
+    "CORS_ORIGIN": {
+      "description": "Allowed CORS origin",
+      "value": "*"
+    },
+    "LOG_LEVEL": {
+      "description": "Logging level",
+      "value": "info"
+    }
+  },
+  "formation": {
+    "web": {
+      "quantity": 1,
+      "size": "basic"
+    }
+  },
+  "scripts": {
+    "postdeploy": "cd backend && npx prisma migrate deploy && npx prisma generate"
+  }
+}

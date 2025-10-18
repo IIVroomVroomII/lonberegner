@@ -1,0 +1,10 @@
+build:
+  languages:
+    - nodejs
+run:
+  web: cd backend && npm run start
+release:
+  command:
+    - cd backend && npx prisma migrate deploy
+    - cd backend && npx prisma generate
+  image: web

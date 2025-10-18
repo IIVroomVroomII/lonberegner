@@ -1,0 +1,737 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Bruger model - både administratorer og medarbejdere
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  passwordHash  String
+  name          String
+  role          UserRole  @default(EMPLOYEE)
+  teamId        String?
+  teamRole      String?   // Rolle inden for teamet
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  employee      Employee?
+  auditLogs     AuditLog[]
+
+  @@index([isActive, role])
+  @@index([email])
+  @@index([teamId])
+  @@map("users")
+}
+
+enum UserRole {
+  ADMIN
+  PAYROLL_MANAGER
+  EMPLOYEE
+}
+
+// Medarbejder detaljer
+model Employee {
+  id                      String              @id @default(uuid())
+  userId                  String              @unique
+  cprNumber               String?             @unique // Kan være null hvis anonym ID bruges
+  employeeNumber          String              @unique
+  jobCategory             JobCategory
+  agreementType           AgreementType
+  employmentDate          DateTime
+  anciennity              Int                 @default(0) // I måneder
+  workTimeType            WorkTimeType
+  baseSalary              Decimal             @db.Decimal(10, 2)
+  department              String?
+  location                String?
+  postalCode              String?             // For geografisk differentiering (København vs. Provinsen)
+
+  // § 2 Løn - Tillæg og kvalifikationer
+  hasDriverLicense        Boolean             @default(false)
+  driverLicenseNumber     String?
+  driverLicenseExpiry     DateTime?
+  hasTachographCard       Boolean             @default(false)
+  tachographCardNumber    String?
+  tachographCardExpiry    DateTime?
+  hasForkliftCertificate  Boolean             @default(false)
+  hasCraneCertificate     Boolean             @default(false)
+  hasADRCertificate       Boolean             @default(false)
+  adrCertificateType      String?             // "Tank", "Stykgods", "Klasse 1", "Klasse 7"
+  hasVocationalDegree     Boolean             @default(false) // Erhvervsuddannelse (faglært)
+  vocationalDegreeType    String?             // "Transport", "Lager", etc.
+
+  // § 6 stk. 3 Lokalløn
+  localSalaryAgreement    Decimal?            @db.Decimal(10, 2) // Max kr. 2,50/time
+
+  // § 6 stk. 8 Ungarbejdere
+  isYouthWorker           Boolean             @default(false)
+  birthDate               DateTime?
+
+  // § 8 Særlig opsparing
+  useSpecialSavings       Boolean             @default(false) // true = opsparing, false = løntillæg
+
+  // § 11 stk. 7 Seniorordning
+  seniorSchemeActive      Boolean             @default(false)
+  seniorDaysPerYear       Int                 @default(0) // Max 46 dage
+  seniorPensionConversion Decimal             @default(0) @db.Decimal(5, 2) // Hvor meget pension konverteres (%)
+
+  // Grænseoverskridende
+  isCrossBorderDriver     Boolean             @default(false)
+  isFixedCrossBorder      Boolean             @default(false) // Fast eksportkørsel
+
+  // Lærlinge
+  isApprentice            Boolean             @default(false)
+  apprenticeYear          Int?                // 1, 2, 3 (sidste år, næstsidste, tredjesidste)
+  isAdultApprentice       Boolean             @default(false)
+  isEGUStudent            Boolean             @default(false)
+
+  // Beregningsprofil
+  calculationProfileId    String?
+  calculationProfile      CalculationProfile? @relation(fields: [calculationProfileId], references: [id], onDelete: SetNull)
+
+  // Relationer
+  user                    User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  timeEntries             TimeEntry[]
+  payrollCalculations     PayrollCalculation[]
+  freedomAccount          FreedomAccount?
+  absenceEntries          AbsenceEntry[]
+  turnusSchedules         TurnusSchedule[]
+  timeBankEntries         TimeBankEntry[]
+  trainingActivities      TrainingActivity[]
+
+  createdAt               DateTime            @default(now())
+  updatedAt               DateTime            @updatedAt
+
+  @@index([employeeNumber])
+  @@index([jobCategory, agreementType])
+  @@index([department])
+  @@index([postalCode])
+  @@map("employees")
+}
+
+enum JobCategory {
+  DRIVER              // Chauffør
+  WAREHOUSE           // Lager
+  MOVER               // Flyttearbejder
+  TERMINAL            // Terminal
+  RENOVATION          // Renovationsarbejder
+}
+
+enum AgreementType {
+  DRIVER_AGREEMENT    // Chaufføroverenskomst
+  WAREHOUSE_AGREEMENT // Lageroverenskomst
+  MOVER_AGREEMENT     // Flytteoverenskomst
+}
+
+enum WorkTimeType {
+  HOURLY              // Timelønnet
+  SALARIED            // Fuldlønnet
+  SUBSTITUTE          // Afløser
+  SHIFT_WORK          // Holddrift
+}
+
+// Tidsregistrering
+model TimeEntry {
+  id                String              @id @default(uuid())
+  employeeId        String
+  date              DateTime
+  startTime         DateTime
+  endTime           DateTime?
+  breakDuration     Int                 @default(0) // I minutter
+  location          String?
+  route             String?
+  taskType          TaskType
+  isIrregularHours  Boolean             @default(false) // Natarbejde, helligdag
+  isNightWork       Boolean             @default(false)
+  isWeekend         Boolean             @default(false)
+  isHoliday         Boolean             @default(false)
+  comment           String?
+  status            TimeEntryStatus     @default(PENDING)
+
+  employee          Employee            @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  payrollComponent  PayrollComponent?
+
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  @@index([employeeId, date])
+  @@index([status])
+  @@index([date])
+  @@map("time_entries")
+}
+
+enum TaskType {
+  DISTRIBUTION        // Distribution
+  TERMINAL_WORK       // Terminalarbejde
+  DRIVING             // Kørsel
+  MOVING              // Flytning
+  LOADING             // Lastning
+  UNLOADING           // Losning
+}
+
+enum TimeEntryStatus {
+  PENDING             // Afventer godkendelse
+  APPROVED            // Godkendt
+  REJECTED            // Afvist
+  CALCULATED          // Beregnet til løn
+}
+
+// Lønberegning
+model PayrollCalculation {
+  id                    String                @id @default(uuid())
+  employeeId            String
+  periodStart           DateTime
+  periodEnd             DateTime
+  totalHours            Decimal             @db.Decimal(10, 2)
+  regularHours          Decimal             @db.Decimal(10, 2)
+  overtimeHours         Decimal             @db.Decimal(10, 2)
+  nightHours            Decimal             @db.Decimal(10, 2)
+  weekendHours          Decimal             @db.Decimal(10, 2)
+
+  baseSalary            Decimal             @db.Decimal(10, 2)
+  overtimePay           Decimal             @db.Decimal(10, 2)
+  nightAllowance        Decimal             @db.Decimal(10, 2)
+  weekendAllowance      Decimal             @db.Decimal(10, 2)
+  specialAllowance      Decimal             @db.Decimal(10, 2)
+  totalGrossPay         Decimal             @db.Decimal(10, 2)
+
+  pensionEmployer       Decimal             @db.Decimal(10, 2)// 11%
+  pensionEmployee       Decimal             @db.Decimal(10, 2)// 2%
+  vacation              Decimal             @db.Decimal(10, 2)
+  specialSavings        Decimal             @db.Decimal(10, 2)
+
+  status                PayrollStatus         @default(DRAFT)
+  exportedAt            DateTime?
+  exportedTo            String?               // Hvilket lønsystem
+
+  employee              Employee              @relation(fields: [employeeId], references: [id])
+  components            PayrollComponent[]
+  auditLogs             AuditLog[]
+
+  createdAt             DateTime              @default(now())
+  updatedAt             DateTime              @updatedAt
+
+  @@index([employeeId, periodStart, periodEnd])
+  @@index([status])
+  @@index([periodStart])
+  @@map("payroll_calculations")
+}
+
+enum PayrollStatus {
+  DRAFT                 // Kladde
+  PENDING_REVIEW        // Afventer gennemsyn
+  APPROVED              // Godkendt
+  EXPORTED              // Sendt til lønsystem
+  PAID                  // Udbetalt
+}
+
+// Lønkomponenter (detaljeret nedbrydning)
+model PayrollComponent {
+  id                    String              @id @default(uuid())
+  payrollCalculationId  String
+  timeEntryId           String?             @unique
+  componentType         ComponentType
+  description           String
+  hours                 Decimal?            @db.Decimal(10, 2)
+  rate                  Decimal           @db.Decimal(10, 2)
+  amount                Decimal           @db.Decimal(10, 2)
+  agreementReference    String?             // fx "§ 7 Overarbejde"
+
+  payrollCalculation    PayrollCalculation  @relation(fields: [payrollCalculationId], references: [id], onDelete: Cascade)
+  timeEntry             TimeEntry?          @relation(fields: [timeEntryId], references: [id])
+
+  createdAt             DateTime            @default(now())
+
+  @@index([payrollCalculationId])
+  @@index([componentType])
+  @@map("payroll_components")
+}
+
+enum ComponentType {
+  BASE_SALARY           // Grundløn
+  OVERTIME              // Overarbejde
+  NIGHT_ALLOWANCE       // Nattillæg
+  WEEKEND_ALLOWANCE     // Weekendtillæg
+  HOLIDAY_ALLOWANCE     // Helligdagstillæg
+  SHIFTED_TIME          // Forskudt tid
+  SPECIAL_ALLOWANCE     // Særligt tillæg
+  DRIVER_ALLOWANCE      // Chaufførtillæg
+  WAREHOUSE_ALLOWANCE   // Lagertillæg
+  MOVER_ALLOWANCE       // Flyttetillæg
+  SHIFT_ALLOWANCE       // Holddriftstillæg
+  PENSION_EMPLOYER      // Pension arbejdsgiver
+  PENSION_EMPLOYEE      // Pension medarbejder
+  VACATION              // Ferie
+  SPECIAL_SAVINGS       // Særlig opsparing
+}
+
+// Overenskomst definition
+model Agreement {
+  id                String            @id @default(uuid())
+  name              String
+  type              AgreementType
+  validFrom         DateTime
+  validTo           DateTime?
+
+  // § 6 Løn
+  baseHourlyRate    Decimal           @db.Decimal(10, 2)
+  weeklyHours       Decimal           @db.Decimal(10, 2)@default(37)
+
+  // § 7 Overarbejde
+  overtime1to3Rate  Decimal           @db.Decimal(10, 2)// 1-3 timer
+  overtimeAbove3Rate Decimal     @db.Decimal(5, 2)     // 4+ timer
+
+  // § 4 stk. 5 Forskudt tid
+  shiftedTimeRate   Decimal           @db.Decimal(10, 2)
+
+  // § 8 Særligt tillæg
+  specialAllowancePercent Decimal     @db.Decimal(5, 2)// fx 7.6%
+
+  // § 9 Pension
+  pensionEmployerPercent  Decimal     @db.Decimal(5, 2)// 11%
+  pensionEmployeePercent  Decimal     @db.Decimal(5, 2)// 2%
+
+  // § 11 Weekend og helligdagstillæg
+  weekendAllowancePercent Decimal     @db.Decimal(5, 2)
+  holidayAllowancePercent Decimal     @db.Decimal(5, 2)
+
+  // § 12-13 Ferie
+  vacationPercent   Decimal           @db.Decimal(10, 2)
+  vacationDaysPerYear Int             @default(25)
+
+  isActive          Boolean           @default(true)
+
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  @@index([type, isActive])
+  @@index([validFrom, validTo])
+  @@map("agreements")
+}
+
+// Audit log for ændringer
+model AuditLog {
+  id                    String              @id @default(uuid())
+  userId                String
+  payrollCalculationId  String?
+  action                String
+  entityType            String
+  entityId              String
+  oldValue              Json?
+  newValue              Json?
+  comment               String?
+  ipAddress             String?
+
+  user                  User                @relation(fields: [userId], references: [id])
+  payrollCalculation    PayrollCalculation? @relation(fields: [payrollCalculationId], references: [id])
+
+  createdAt             DateTime            @default(now())
+
+  @@index([entityType, entityId])
+  @@index([userId, createdAt])
+  @@index([action])
+  @@map("audit_logs")
+}
+
+// Integration konfiguration til lønsystemer
+model IntegrationConfig {
+  id            String          @id @default(uuid())
+  name          String          @unique
+  type          IntegrationType
+  apiEndpoint   String?
+  apiKey        String?         // Krypteret
+  username      String?
+  isActive      Boolean         @default(true)
+  config        Json            // Ekstra konfiguration
+
+  lastSyncAt    DateTime?
+
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  @@map("integration_configs")
+}
+
+enum IntegrationType {
+  ECONOMIC      // e-conomic
+  DANLON        // Danløn
+  PROLON        // ProLøn
+  LESSOR        // Lessor
+  DATALON       // Dataløn
+  CUSTOM        // Brugerdefineret
+}
+
+// § 11 Frihedskonto - For timelønnede medarbejdere (6,75% af ferieberettiget løn)
+model FreedomAccount {
+  id                String                @id @default(uuid())
+  employeeId        String                @unique
+  balance           Decimal               @default(0) @db.Decimal(10, 2) // I kroner
+  yearlyDeposit     Decimal               @default(0) @db.Decimal(10, 2)
+
+  employee          Employee              @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  transactions      FreedomAccountTransaction[]
+
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
+
+  @@map("freedom_accounts")
+}
+
+// Transaktioner på frihedskonto
+model FreedomAccountTransaction {
+  id                  String          @id @default(uuid())
+  freedomAccountId    String
+  amount              Decimal         @db.Decimal(10, 2) // Positiv = indbetaling, negativ = udbetaling
+  type                FreedomTransactionType
+  description         String
+  date                DateTime        @default(now())
+
+  freedomAccount      FreedomAccount  @relation(fields: [freedomAccountId], references: [id], onDelete: Cascade)
+
+  @@index([freedomAccountId, date])
+  @@map("freedom_account_transactions")
+}
+
+enum FreedomTransactionType {
+  DEPOSIT             // Indbetaling (6,75%)
+  FREEDOM_DAY         // Fridag (1. maj, Grundlovsdag, Juleaftensdag, etc.)
+  VACATION_DAY        // Feriefridag
+  SENIOR_DAY          // Seniorfridag
+  YEAR_END_PAYOUT     // Årslutning udbetaling
+  TERMINATION_PAYOUT  // Fratrædelse udbetaling
+}
+
+// § 14-17 Fravær (Sygdom, Barsel, Børns sygdom, etc.)
+model AbsenceEntry {
+  id                  String          @id @default(uuid())
+  employeeId          String
+  type                AbsenceType
+  startDate           DateTime
+  endDate             DateTime?       // Null hvis stadig fraværende
+  daysCount           Int             @default(0) // Antal dage
+  isPaid              Boolean         @default(false) // Om det er lønnet fravær
+  paymentAmount       Decimal?        @db.Decimal(10, 2)
+  note                String?
+
+  // Barsel specifikke felter
+  expectedBirthDate   DateTime?
+  actualBirthDate     DateTime?
+  isMaternityLeave    Boolean         @default(false) // Mor
+  isPaternityLeave    Boolean         @default(false) // Far/Medfar
+  isSocialParent      Boolean         @default(false) // Social forælder (fra 1.6.2025)
+  isRelativeCaregiver Boolean         @default(false) // Nærtstående (fra 1.6.2025)
+
+  // Børns sygdom specifikke
+  childName           String?
+  childBirthDate      DateTime?
+
+  employee            Employee        @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+
+  @@index([employeeId, startDate])
+  @@index([type])
+  @@map("absence_entries")
+}
+
+enum AbsenceType {
+  SICKNESS            // § 14 Sygdom
+  MATERNITY_LEAVE     // § 15 Barsel (mor)
+  PATERNITY_LEAVE     // § 15 Barsel (far/medfar)
+  SOCIAL_PARENT_LEAVE // § 15 stk. 4 Social forælder
+  RELATIVE_LEAVE      // § 15 stk. 4 Nærtstående
+  CHILD_FIRST_SICK_DAY // § 16 stk. 1 Barnets 1. sygedag
+  CHILD_SECOND_SICK_DAY // § 16 stk. 1 Barnets 2. sygedag
+  CHILD_THIRD_SICK_DAY // § 16 stk. 1 Barnets 3. sygedag
+  CHILD_DOCTOR_VISIT  // § 16 stk. 2 Lægebesøg med barn
+  CHILD_CARE_DAY      // § 16 stk. 3 Børneomsorgsdage (2/år)
+  GRANDCHILD_CARE_DAY // § 16 stk. 4 Børnebørnsomsorgsdage (2/år)
+  RELATIVE_ESCORT     // § 16 stk. 5 Ledsagelse nærtstående (2-7 dage)
+  CHILD_HOSPITALIZATION // § 17 Børns hospitalsindlæggelse (max 1 uge/12 mdr)
+  VACATION            // Ferie
+  VACATION_FREEDOM_DAY // Feriefridag
+  SENIOR_DAY          // Seniorfridag
+  OTHER               // Andet
+}
+
+// Holddriftsaftale - Turnusplaner
+model TurnusSchedule {
+  id                String          @id @default(uuid())
+  employeeId        String
+  name              String          // fx "3-skift kontinuerlig"
+  shiftType         ShiftType
+  weeklyHours       Decimal         @db.Decimal(5, 2) // 1. skift: 37t, 2.-3. skift: 34t
+  cycleLengthWeeks  Int             // fx 3 uger for 105 timer cyklus
+  totalCycleHours   Decimal         @db.Decimal(10, 2) // fx 105 timer
+  isActive          Boolean         @default(true)
+  validFrom         DateTime
+  validTo           DateTime?
+
+  employee          Employee        @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  shiftDays         TurnusDay[]
+
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  @@index([employeeId, isActive])
+  @@map("turnus_schedules")
+}
+
+// Dage i turnusplan
+model TurnusDay {
+  id                  String          @id @default(uuid())
+  turnusScheduleId    String
+  dayOfCycle          Int             // Dag 1, 2, 3, ... i cyklus
+  shiftType           ShiftType
+  startTime           String          // "06:00"
+  endTime             String          // "14:00"
+  hoursScheduled      Decimal         @db.Decimal(5, 2)
+  isWorkDay           Boolean         @default(true)
+  isRestDay           Boolean         @default(false)
+
+  turnusSchedule      TurnusSchedule  @relation(fields: [turnusScheduleId], references: [id], onDelete: Cascade)
+
+  @@index([turnusScheduleId, dayOfCycle])
+  @@map("turnus_days")
+}
+
+enum ShiftType {
+  FIRST_SHIFT         // 1. skift (dag) - typisk 06:00-14:00, 37 timer/uge
+  SECOND_SHIFT        // 2. skift (aften) - typisk 14:00-22:00, 34 timer/uge
+  THIRD_SHIFT         // 3. skift (nat) - typisk 22:00-06:00, 34 timer/uge
+  ROTATING            // Roterende skift
+}
+
+// § 4 Afspadsering - Timebank
+model TimeBankEntry {
+  id                String          @id @default(uuid())
+  employeeId        String
+  hours             Decimal         @db.Decimal(10, 2) // Positiv = optjent, negativ = afspadseret
+  type              TimeBankType
+  description       String
+  date              DateTime
+  expiresAt         DateTime?       // Max 6 måneder efter optjening
+
+  employee          Employee        @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  createdAt         DateTime        @default(now())
+
+  @@index([employeeId, date])
+  @@index([expiresAt])
+  @@map("time_bank_entries")
+}
+
+enum TimeBankType {
+  OVERTIME_EARNED     // Overarbejde optjent
+  TIME_OFF_TAKEN      // Afspadsering taget
+  EXPIRED             // Udløbet (udbetales)
+  PAYOUT              // Udbetalt ved fratræden
+}
+
+// § 23 Kompetenceudvikling - Uddannelsesaktiviteter
+model TrainingActivity {
+  id                  String                @id @default(uuid())
+  employeeId          String
+  type                TrainingType
+  name                String
+  provider            String?               // Uddannelsesudbyder
+  startDate           DateTime
+  endDate             DateTime
+  hoursPlanned        Decimal               @db.Decimal(10, 2)
+  hoursCompleted      Decimal               @default(0) @db.Decimal(10, 2)
+  status              TrainingStatus        @default(PLANNED)
+  isOnPositiveListA   Boolean               @default(false) // Aftalt uddannelse
+  isOnPositiveListB   Boolean               @default(false) // Selvvalgt uddannelse
+  certificateIssued   Boolean               @default(false)
+  certificateUrl      String?
+  cost                Decimal?              @db.Decimal(10, 2)
+  fundingSource       String?               // "HTSK-fonden", "VEU-godtgørelse", "Virksomhed"
+  note                String?
+
+  employee            Employee              @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+
+  @@index([employeeId, startDate])
+  @@index([type, status])
+  @@map("training_activities")
+}
+
+enum TrainingType {
+  COMPETENCE_ASSESSMENT       // Realkompetencevurdering
+  FVU                         // Forberedende voksenundervisning
+  DYSLEXIA                    // Ordblindeundervisning
+  DANISH_FOR_IMMIGRANTS       // Dansk for indvandrere
+  AGREED_TRAINING             // Aftalt uddannelse (2 uger/år)
+  SELF_SELECTED_TRAINING      // Selvvalgt uddannelse (2 uger/år, max 6 uger/3 år)
+  EUV1_EUV2                   // EUV1/EUV2 forløb
+  MERIT_COURSE                // Meritkurs
+  JOURNEYMAN_EXAM             // Svendeprøvemodul
+  DRIVER_QUALIFICATION        // Chaufføruddannelsesbevis
+  ADR_CERTIFICATE             // ADR certifikat
+  FORKLIFT_CERTIFICATE        // Gaffeltruckcertifikat
+  CRANE_CERTIFICATE           // Krancertifikat
+  OTHER                       // Andet
+}
+
+enum TrainingStatus {
+  PLANNED                     // Planlagt
+  APPROVED                    // Godkendt
+  IN_PROGRESS                 // I gang
+  COMPLETED                   // Gennemført
+  CANCELLED                   // Aflyst
+  FAILED                      // Ikke bestået
+}
+
+// Team model - til multi-tenant support
+model Team {
+  id                  String                @id @default(uuid())
+  name                String
+  organizationNumber  String?               @unique // CVR nummer
+  contactEmail        String
+  contactPhone        String?
+  isActive            Boolean               @default(true)
+
+  calculationProfiles CalculationProfile[]
+
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+
+  @@map("teams")
+}
+
+// Beregningsprofiler - til fleksibel konfiguration af tidsberegninger
+model CalculationProfile {
+  id                        String              @id @default(uuid())
+  teamId                    String
+  name                      String
+  description               String?
+
+  // Tidsafrunding
+  timeRoundingMinutes       Int                 @default(0) // 0, 5, 10, 15, 30
+  timeRoundingDirection     RoundingDirection   @default(NEAREST)
+
+  // Tid før fastsat mødetid
+  countPreMeetingTime       Boolean             @default(false)
+  maxPreMeetingMinutes      Int                 @default(30)
+
+  // Arbejdstid starter
+  timeStartsAt              TimeStartMode       @default(SCHEDULED)
+
+  // Konflikt håndtering
+  conflictHandling          ConflictHandling    @default(MANUAL_REVIEW)
+  conflictThresholdPercent  Decimal             @default(10) @db.Decimal(5, 2) // % afvigelse før konflikt
+
+  // Standard profil for teamet
+  isDefault                 Boolean             @default(false)
+
+  // Relationer
+  team                      Team                @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  employees                 Employee[]
+
+  createdAt                 DateTime            @default(now())
+  updatedAt                 DateTime            @updatedAt
+
+  @@index([teamId, isDefault])
+  @@index([name])
+  @@map("calculation_profiles")
+}
+
+enum RoundingDirection {
+  UP                        // Rund altid op
+  DOWN                      // Rund altid ned
+  NEAREST                   // Rund til nærmeste
+}
+
+enum TimeStartMode {
+  SCHEDULED                 // Ved fastsat mødetid
+  ACTUAL                    // Ved faktisk ankomst
+}
+
+enum ConflictHandling {
+  AUTO_ADJUST               // Ret automatisk i forhold til profil
+  MANUAL_REVIEW             // Send til konfliktliste til manuel gennemsyn
+  AUTO_WITH_NOTIFICATION    // Ret automatisk, men notificer
+}
+
+// Konfliktliste - tid der afviger fra profil indstillinger
+model ConflictEntry {
+  id                        String              @id @default(uuid())
+  timeEntryId               String
+  employeeId                String
+  calculationProfileId      String
+
+  // Konflikt detaljer
+  conflictType              ConflictType
+  conflictDescription       String
+
+  // Original værdier
+  originalStartTime         DateTime
+  originalEndTime           DateTime?
+  originalBreakDuration     Int                 // I minutter
+
+  // Foreslåede værdier (baseret på profil)
+  suggestedStartTime        DateTime
+  suggestedEndTime          DateTime?
+  suggestedBreakDuration    Int                 // I minutter
+
+  // Afvigelse
+  deviationMinutes          Int                 // Hvor mange minutter afvigelse
+  deviationPercent          Decimal             @db.Decimal(5, 2) // % afvigelse
+
+  // Status
+  status                    ConflictStatus      @default(PENDING)
+  resolution                ConflictResolution?
+  resolvedBy                String?             // User ID
+  resolvedAt                DateTime?
+  resolutionNote            String?
+
+  // Valgt løsning
+  finalStartTime            DateTime?
+  finalEndTime              DateTime?
+  finalBreakDuration        Int?
+
+  createdAt                 DateTime            @default(now())
+  updatedAt                 DateTime            @updatedAt
+
+  @@index([status, createdAt])
+  @@index([employeeId, status])
+  @@index([timeEntryId])
+  @@map("conflict_entries")
+}
+
+enum ConflictType {
+  TIME_ROUNDING             // Tid skal afrundes
+  PRE_MEETING_TIME          // Tid før fastsat mødetid
+  LATE_ARRIVAL              // For sen ankomst
+  EARLY_DEPARTURE           // For tidlig afgang
+  EXCESSIVE_BREAK           // For lang pause
+  MISSING_BREAK             // Manglende pause
+  OVERTIME_THRESHOLD        // Overarbejde grænse overskredet
+  OTHER                     // Andet
+}
+
+enum ConflictStatus {
+  PENDING                   // Afventer behandling
+  REVIEWED                  // Gennemset
+  APPROVED                  // Godkendt
+  REJECTED                  // Afvist
+  AUTO_RESOLVED             // Automatisk løst
+}
+
+enum ConflictResolution {
+  ACCEPT_ORIGINAL           // Accepter original tid
+  ACCEPT_SUGGESTED          // Accepter foreslået tid
+  MANUAL_ADJUSTMENT         // Manuel justering
+  IGNORE                    // Ignorer konflikten
+}
