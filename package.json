@@ -23,7 +23,7 @@
     "migrate:dev": "npm run migrate:dev --workspace=backend",
     "migrate:deploy": "npm run migrate:deploy --workspace=backend",
     "studio": "npm run studio --workspace=backend",
-    "heroku-postbuild": "cd backend && npx prisma generate && cd .. && npm run build:backend"
+    "heroku-postbuild": "cd backend && npx prisma generate && cd .. && npm run build:backend && npm run build:webapp"
   },
   "engines": {
     "node": ">=18.0.0",

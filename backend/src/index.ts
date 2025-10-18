@@ -3,6 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
+import path from 'path';
 import { errorHandler } from './middleware/errorHandler';
 import { logger } from './config/logger';
 import { setupSwagger } from './config/swagger';
@@ -15,7 +16,9 @@ const app: Express = express();
 const port = process.env.PORT || 3000;
 
 // Middleware
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: false, // Disable CSP for React app
+}));
 app.use(cors({
   origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
   credentials: true
@@ -34,6 +37,17 @@ app.get('/health', (_req, res) => {
 
 // API Routes
 app.use('/api/v1', routes);
+
+// Serve static files from webapp/dist in production
+if (process.env.NODE_ENV === 'production') {
+  const webappPath = path.join(__dirname, '../../webapp/dist');
+  app.use(express.static(webappPath));
+
+  // Catch-all route for React Router (must be after API routes)
+  app.get('*', (_req, res) => {
+    res.sendFile(path.join(webappPath, 'index.html'));
+  });
+}
 
 // Error handling
 app.use(errorHandler);
