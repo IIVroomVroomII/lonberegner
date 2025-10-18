@@ -22,7 +22,8 @@
     "lint": "npm run lint --workspaces",
     "migrate:dev": "npm run migrate:dev --workspace=backend",
     "migrate:deploy": "npm run migrate:deploy --workspace=backend",
-    "studio": "npm run studio --workspace=backend"
+    "studio": "npm run studio --workspace=backend",
+    "heroku-postbuild": "npm run build:backend"
   },
   "engines": {
     "node": ">=18.0.0",
