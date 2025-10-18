@@ -23,10 +23,10 @@ export default function LoginPage() {
     try {
       const response = await authAPI.login(email, password);
       localStorage.setItem('token', response.data.data.token);
-      navigate('/dashboard');
+      // Force a full page reload to re-evaluate authentication state
+      window.location.href = '/dashboard';
     } catch (err: any) {
       setError(err.response?.data?.message || 'Login fejlede. Tjek email og adgangskode.');
-    } finally {
       setLoading(false);
     }
   };
