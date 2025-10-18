@@ -64,9 +64,11 @@ export default function CalculatePayrollDialog({
   const fetchEmployees = async () => {
     try {
       const response = await employeesAPI.list();
-      setEmployees(response.data.data || []);
+      const employeeData = response.data.data;
+      setEmployees(Array.isArray(employeeData) ? employeeData : []);
     } catch (error) {
       console.error('Failed to fetch employees:', error);
+      setEmployees([]);
     }
   };
 
@@ -166,7 +168,7 @@ export default function CalculatePayrollDialog({
                   required
                   sx={{ fontSize: '0.875rem' }}
                 >
-                  {employees.map((emp) => (
+                  {Array.isArray(employees) && employees.map((emp) => (
                     <MenuItem key={emp.id} value={emp.id} sx={{ fontSize: '0.875rem' }}>
                       {emp.user.name} ({emp.employeeNumber})
                     </MenuItem>

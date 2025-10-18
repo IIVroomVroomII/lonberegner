@@ -302,23 +302,6 @@ export default function LoginPage() {
           </Button>
         </form>
 
-        <Box sx={{ mt: 3, pt: 3, borderTop: '1px solid var(--border-color)' }}>
-          <Typography
-            variant="caption"
-            sx={{
-              display: 'block',
-              color: 'var(--text-muted)',
-              fontSize: '0.75rem',
-              lineHeight: 1.6,
-            }}
-          >
-            <strong>Test login:</strong>
-            <br />
-            Admin: admin@lonberegning.dk / admin123
-            <br />
-            Manager: manager@lonberegning.dk / manager123
-          </Typography>
-        </Box>
       </Paper>
     </Box>
   );
