@@ -8,6 +8,7 @@ import agreementRoutes from './agreementRoutes';
 import exportRoutes from './exportRoutes';
 import calculationProfileRoutes from './calculationProfileRoutes';
 import conflictRoutes from './conflictRoutes';
+import importRoutes from './importRoutes';
 
 const router = Router();
 
@@ -21,5 +22,6 @@ router.use('/agreements', agreementRoutes);
 router.use('/export', exportRoutes);
 router.use('/calculation-profiles', calculationProfileRoutes);
 router.use('/conflicts', conflictRoutes);
+router.use('/import', importRoutes);
 
 export default router;

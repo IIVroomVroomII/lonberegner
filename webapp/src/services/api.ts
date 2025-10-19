@@ -114,3 +114,17 @@ export const conflictsAPI = {
   batchApprove: (conflictIds: string[]) => api.post('/conflicts/batch-approve', { conflictIds }),
   getStats: (params?: any) => api.get('/conflicts/stats', { params }),
 };
+
+// Import
+export const importAPI = {
+  importEmployees: (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return api.post('/import/employees', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
+  downloadTemplate: () => api.get('/import/template', { responseType: 'blob' }),
+};

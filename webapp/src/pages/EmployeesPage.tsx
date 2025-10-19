@@ -4,10 +4,12 @@ import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import UploadFileIcon from '@mui/icons-material/UploadFile';
 import { employeesAPI } from '../services/api';
 import { format } from 'date-fns';
 import { da } from 'date-fns/locale';
 import EmployeeFormDialog from '../components/EmployeeFormDialog';
+import ImportEmployeesDialog from '../components/ImportEmployeesDialog';
 
 interface Employee {
   id: string;
@@ -51,6 +53,7 @@ export default function EmployeesPage() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [editingEmployeeId, setEditingEmployeeId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -239,24 +242,45 @@ export default function EmployeesPage() {
         >
           Medarbejdere
         </Typography>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon sx={{ fontSize: '1rem' }} />}
-          onClick={() => handleOpenDialog()}
-          sx={{
-            py: 0.75,
-            px: 2,
-            fontSize: '0.875rem',
-            fontWeight: 500,
-            backgroundColor: '#7dd3fc',
-            color: '#1e1e1e',
-            '&:hover': {
-              backgroundColor: '#5eadd1',
-            },
-          }}
-        >
-          Ny medarbejder
-        </Button>
+        <Box sx={{ display: 'flex', gap: 1.5 }}>
+          <Button
+            variant="outlined"
+            startIcon={<UploadFileIcon sx={{ fontSize: '1rem' }} />}
+            onClick={() => setImportDialogOpen(true)}
+            sx={{
+              py: 0.75,
+              px: 2,
+              fontSize: '0.875rem',
+              fontWeight: 500,
+              borderColor: '#7dd3fc',
+              color: '#7dd3fc',
+              '&:hover': {
+                borderColor: '#5eadd1',
+                backgroundColor: 'rgba(125, 211, 252, 0.1)',
+              },
+            }}
+          >
+            Importer medarbejdere
+          </Button>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon sx={{ fontSize: '1rem' }} />}
+            onClick={() => handleOpenDialog()}
+            sx={{
+              py: 0.75,
+              px: 2,
+              fontSize: '0.875rem',
+              fontWeight: 500,
+              backgroundColor: '#7dd3fc',
+              color: '#1e1e1e',
+              '&:hover': {
+                backgroundColor: '#5eadd1',
+              },
+            }}
+          >
+            Ny medarbejder
+          </Button>
+        </Box>
       </Box>
 
       <Box
@@ -324,6 +348,12 @@ export default function EmployeesPage() {
         onClose={handleCloseDialog}
         onSuccess={handleDialogSuccess}
         employeeId={editingEmployeeId}
+      />
+
+      <ImportEmployeesDialog
+        open={importDialogOpen}
+        onClose={() => setImportDialogOpen(false)}
+        onSuccess={fetchEmployees}
       />
     </Box>
   );
