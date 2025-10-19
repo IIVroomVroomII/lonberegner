@@ -147,3 +147,9 @@ export const reportsAPI = {
   getSalaryCostCSV: (params?: any) =>
     api.get('/reports/salary-cost', { params: { ...params, format: 'csv' }, responseType: 'blob' }),
 };
+
+// Audit Logs
+export const auditLogsAPI = {
+  list: (params?: any) => api.get('/audit-logs', { params }),
+  getStats: () => api.get('/audit-logs/stats'),
+};

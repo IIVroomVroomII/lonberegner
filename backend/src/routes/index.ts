@@ -10,6 +10,7 @@ import calculationProfileRoutes from './calculationProfileRoutes';
 import conflictRoutes from './conflictRoutes';
 import importRoutes from './importRoutes';
 import reportsRoutes from './reportsRoutes';
+import auditLogRoutes from './auditLogRoutes';
 
 const router = Router();
 
@@ -25,5 +26,6 @@ router.use('/calculation-profiles', calculationProfileRoutes);
 router.use('/conflicts', conflictRoutes);
 router.use('/import', importRoutes);
 router.use('/reports', reportsRoutes);
+router.use('/audit-logs', auditLogRoutes);
 
 export default router;

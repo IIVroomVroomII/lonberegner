@@ -28,6 +28,7 @@ import PaletteIcon from '@mui/icons-material/Palette';
 import CheckIcon from '@mui/icons-material/Check';
 import SettingsIcon from '@mui/icons-material/Settings';
 import WarningIcon from '@mui/icons-material/Warning';
+import HistoryIcon from '@mui/icons-material/History';
 import { useThemeStore, themes, type ThemeName } from '../store/themeStore';
 
 const drawerWidth = 240;
@@ -41,6 +42,7 @@ const menuItems = [
   { text: 'Beregningsprofiler', icon: <SettingsIcon />, path: '/calculation-profiles' },
   { text: 'Konfliktliste', icon: <WarningIcon />, path: '/conflicts' },
   { text: 'Overenskomster', icon: <DescriptionIcon />, path: '/agreements' },
+  { text: 'Audit Log', icon: <HistoryIcon />, path: '/audit-logs' },
 ];
 
 export default function Layout() {
