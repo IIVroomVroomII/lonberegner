@@ -113,7 +113,11 @@ const AIIntegrationsPage = () => {
       });
 
       await fetchIntegrations();
-      setSelectedIntegration(response.data.data);
+      setSelectedIntegration({
+        ...response.data.data,
+        uploadedFiles: response.data.data.uploadedFiles || [],
+        chatMessages: response.data.data.chatMessages || [],
+      });
       setOpenDialog(false);
       setNewIntegration({
         name: '',
@@ -134,7 +138,7 @@ const AIIntegrationsPage = () => {
 
     try {
       setLoading(true);
-      const fileIds = selectedIntegration.uploadedFiles.map(f => f.id);
+      const fileIds = (selectedIntegration.uploadedFiles || []).map(f => f.id);
       const response = await api.post(`/ai-integrations/${selectedIntegration.id}/chat`, {
         message: chatMessage,
         documentationUrls: [],
@@ -325,7 +329,7 @@ const AIIntegrationsPage = () => {
                 {tabValue === 0 && (
                   <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
                     <Box sx={{ flex: 1, overflow: 'auto', mb: 2 }}>
-                      {selectedIntegration.chatMessages.map((msg, idx) => (
+                      {(selectedIntegration.chatMessages || []).map((msg, idx) => (
                         <Box
                           key={idx}
                           sx={{
@@ -393,7 +397,7 @@ const AIIntegrationsPage = () => {
                     />
 
                     <List>
-                      {selectedIntegration.uploadedFiles.map(file => (
+                      {(selectedIntegration.uploadedFiles || []).map(file => (
                         <ListItem
                           key={file.id}
                           secondaryAction={
