@@ -329,6 +329,47 @@ const AIIntegrationsPage = () => {
                 {tabValue === 0 && (
                   <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
                     <Box sx={{ flex: 1, overflow: 'auto', mb: 2 }}>
+                      {(selectedIntegration.chatMessages || []).length === 0 && (
+                        <Box
+                          sx={{
+                            mb: 2,
+                            p: 3,
+                            backgroundColor: '#f5f5f5',
+                            borderRadius: 2,
+                            border: '2px dashed #ccc',
+                          }}
+                        >
+                          <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                            Claude
+                          </Typography>
+                          <Typography variant="body1" sx={{ mt: 1, mb: 2 }}>
+                            Hej! Jeg er her for at hjælpe dig med at sætte denne integration op. 👋
+                          </Typography>
+                          <Typography variant="body2" sx={{ mb: 1 }}>
+                            For at komme i gang, kan du:
+                          </Typography>
+                          <Box component="ul" sx={{ pl: 2, mb: 2 }}>
+                            <li>
+                              <Typography variant="body2">
+                                <strong>Upload API dokumentation</strong> (gå til "Filer" fanen) - PDF, JSON, Markdown osv.
+                              </Typography>
+                            </li>
+                            <li>
+                              <Typography variant="body2">
+                                <strong>Fortæl mig om systemet</strong> - Hvilke data skal du hente? Hvilke endpoints bruges?
+                              </Typography>
+                            </li>
+                            <li>
+                              <Typography variant="body2">
+                                <strong>Del eksempler</strong> - Vis mig hvordan data ser ud, så jeg kan hjælpe med at mappe felterne
+                              </Typography>
+                            </li>
+                          </Box>
+                          <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                            Skriv din første besked nedenfor for at starte! 💬
+                          </Typography>
+                        </Box>
+                      )}
                       {(selectedIntegration.chatMessages || []).map((msg, idx) => (
                         <Box
                           key={idx}
