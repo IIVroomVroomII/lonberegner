@@ -11,6 +11,7 @@ import conflictRoutes from './conflictRoutes';
 import importRoutes from './importRoutes';
 import reportsRoutes from './reportsRoutes';
 import auditLogRoutes from './auditLogRoutes';
+import aiIntegrationsRoutes from './aiIntegrationsRoutes';
 
 const router = Router();
 
@@ -27,5 +28,6 @@ router.use('/conflicts', conflictRoutes);
 router.use('/import', importRoutes);
 router.use('/reports', reportsRoutes);
 router.use('/audit-logs', auditLogRoutes);
+router.use('/ai-integrations', aiIntegrationsRoutes);
 
 export default router;
