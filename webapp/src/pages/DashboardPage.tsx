@@ -17,18 +17,37 @@ import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import PaymentIcon from '@mui/icons-material/Payment';
 import PeopleIcon from '@mui/icons-material/People';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import WarningIcon from '@mui/icons-material/Warning';
 import { dashboardAPI } from '../services/api';
 
 interface DashboardStats {
-  pendingTimeEntries: number;
-  draftPayrolls: number;
-  activeEmployees: number;
-  totalHoursThisMonth: number;
+  overview: {
+    activeEmployees: number;
+    timeEntriesThisMonth: number;
+    totalHoursThisMonth: number;
+    pendingConflicts: number;
+    payrollsThisMonth: number;
+  };
   recentActivity: Array<{
-    type: string;
-    description: string;
-    date: string;
+    id: string;
+    action: string;
+    entityType: string;
+    userName: string;
+    createdAt: string;
+    changes: any;
+  }>;
+  upcomingPayrolls: Array<{
+    id: string;
+    employeeName: string;
+    payPeriodStart: string;
+    payPeriodEnd: string;
+    totalGrossPay: number;
     status: string;
+  }>;
+  topEmployees: Array<{
+    employeeName: string;
+    hours: number;
+    entries: number;
   }>;
 }
 
@@ -53,40 +72,6 @@ export default function DashboardPage() {
 
     fetchStats();
   }, []);
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'PENDING':
-        return '#fbbf24';
-      case 'APPROVED':
-        return '#86efac';
-      case 'REJECTED':
-        return '#f87171';
-      case 'DRAFT':
-        return '#7dd3fc';
-      case 'FINAL':
-        return '#86efac';
-      default:
-        return '#9ca3af';
-    }
-  };
-
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case 'PENDING':
-        return 'Afventer';
-      case 'APPROVED':
-        return 'Godkendt';
-      case 'REJECTED':
-        return 'Afvist';
-      case 'DRAFT':
-        return 'Kladde';
-      case 'FINAL':
-        return 'Endelig';
-      default:
-        return status;
-    }
-  };
 
   if (loading) {
     return (
@@ -121,7 +106,7 @@ export default function DashboardPage() {
       </Typography>
 
       <Grid container spacing={2}>
-        <Grid item xs={12} md={3}>
+        <Grid item xs={12} sm={6} md={2.4}>
           <Card
             elevation={0}
             sx={{
@@ -151,19 +136,19 @@ export default function DashboardPage() {
                   mb: 0.5,
                 }}
               >
-                {stats?.pendingTimeEntries || 0}
+                {stats?.overview.timeEntriesThisMonth || 0}
               </Typography>
               <Typography
                 variant="body2"
                 sx={{ fontSize: '0.8rem', color: '#9ca3af' }}
               >
-                Afventer godkendelse
+                Denne måned
               </Typography>
             </CardContent>
           </Card>
         </Grid>
 
-        <Grid item xs={12} md={3}>
+        <Grid item xs={12} sm={6} md={2.4}>
           <Card
             elevation={0}
             sx={{
@@ -193,19 +178,19 @@ export default function DashboardPage() {
                   mb: 0.5,
                 }}
               >
-                {stats?.draftPayrolls || 0}
+                {stats?.overview.payrollsThisMonth || 0}
               </Typography>
               <Typography
                 variant="body2"
                 sx={{ fontSize: '0.8rem', color: '#9ca3af' }}
               >
-                Klar til gennemsyn
+                Denne måned
               </Typography>
             </CardContent>
           </Card>
         </Grid>
 
-        <Grid item xs={12} md={3}>
+        <Grid item xs={12} sm={6} md={2.4}>
           <Card
             elevation={0}
             sx={{
@@ -235,7 +220,7 @@ export default function DashboardPage() {
                   mb: 0.5,
                 }}
               >
-                {stats?.activeEmployees || 0}
+                {stats?.overview.activeEmployees || 0}
               </Typography>
               <Typography
                 variant="body2"
@@ -247,7 +232,7 @@ export default function DashboardPage() {
           </Card>
         </Grid>
 
-        <Grid item xs={12} md={3}>
+        <Grid item xs={12} sm={6} md={2.4}>
           <Card
             elevation={0}
             sx={{
@@ -277,13 +262,55 @@ export default function DashboardPage() {
                   mb: 0.5,
                 }}
               >
-                {stats?.totalHoursThisMonth || 0}
+                {stats?.overview.totalHoursThisMonth || 0}
               </Typography>
               <Typography
                 variant="body2"
                 sx={{ fontSize: '0.8rem', color: '#9ca3af' }}
               >
-                Godkendte timer
+                Arbejdede timer
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid item xs={12} sm={6} md={2.4}>
+          <Card
+            elevation={0}
+            sx={{
+              backgroundColor: '#252526',
+              border: '1px solid #3e3e42',
+              borderRadius: '4px',
+            }}
+          >
+            <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
+                <WarningIcon
+                  sx={{ mr: 1, fontSize: '1.25rem', color: '#f87171' }}
+                />
+                <Typography
+                  variant="h6"
+                  sx={{ fontSize: '0.9rem', fontWeight: 500, color: '#d4d4d4' }}
+                >
+                  Konflikter
+                </Typography>
+              </Box>
+              <Typography
+                variant="h3"
+                sx={{
+                  fontSize: '2rem',
+                  fontWeight: 600,
+                  color: '#f87171',
+                  mb: 0.5,
+                }}
+              >
+                {stats?.overview.pendingConflicts || 0}
+              </Typography>
+              <Typography
+                variant="body2"
+                sx={{ fontSize: '0.8rem', color: '#9ca3af' }}
+              >
+                Afventer handling
               </Typography>
             </CardContent>
           </Card>
@@ -314,7 +341,7 @@ export default function DashboardPage() {
               <List sx={{ py: 0 }}>
                 {stats.recentActivity.map((activity, index) => (
                   <ListItem
-                    key={index}
+                    key={activity.id}
                     sx={{
                       px: 0,
                       py: 1,
@@ -334,24 +361,13 @@ export default function DashboardPage() {
                               fontWeight: 500,
                             }}
                           >
-                            {activity.description}
+                            {activity.userName} - {activity.action} ({activity.entityType})
                           </Typography>
-                          <Chip
-                            label={getStatusLabel(activity.status)}
-                            size="small"
-                            sx={{
-                              fontSize: '0.7rem',
-                              height: '20px',
-                              backgroundColor: getStatusColor(activity.status) + '20',
-                              color: getStatusColor(activity.status),
-                              border: `1px solid ${getStatusColor(activity.status)}`,
-                            }}
-                          />
                         </Box>
                       }
                       secondary={
                         <Typography sx={{ fontSize: '0.75rem', color: '#9ca3af', mt: 0.5 }}>
-                          {new Date(activity.date).toLocaleString('da-DK', {
+                          {new Date(activity.createdAt).toLocaleString('da-DK', {
                             year: 'numeric',
                             month: 'short',
                             day: 'numeric',

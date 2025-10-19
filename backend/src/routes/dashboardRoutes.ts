@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getDashboardStats } from '../controllers/dashboardController';
+import { getDashboardStats, getMonthlyTrends } from '../controllers/dashboardController';
 import { authenticate } from '../middleware/auth';
 
 const router = Router();
@@ -8,5 +8,6 @@ const router = Router();
 router.use(authenticate);
 
 router.get('/stats', getDashboardStats);
+router.get('/trends', getMonthlyTrends);
 
 export default router;
