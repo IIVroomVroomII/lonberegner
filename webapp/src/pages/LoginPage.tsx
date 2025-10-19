@@ -9,8 +9,8 @@ import { useThemeStore, themes, type ThemeName } from '../store/themeStore';
 export default function LoginPage() {
   const navigate = useNavigate();
   const { currentTheme, setTheme } = useThemeStore();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('admin@lonberegning.dk');
+  const [password, setPassword] = useState('admin123');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [themeMenuAnchor, setThemeMenuAnchor] = useState<null | HTMLElement>(null);
