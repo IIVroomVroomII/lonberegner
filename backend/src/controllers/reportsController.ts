@@ -55,17 +55,15 @@ export const getPayrollSummaryReport = async (req: Request, res: Response) => {
       employeeNumber: payroll.employee.employeeNumber,
       periodStart: payroll.periodStart,
       periodEnd: payroll.periodEnd,
-      normalHours: Number(payroll.normalHours),
+      regularHours: Number(payroll.regularHours),
       overtimeHours: Number(payroll.overtimeHours),
       nightHours: Number(payroll.nightHours),
       weekendHours: Number(payroll.weekendHours),
-      holidayHours: Number(payroll.holidayHours),
       totalHours: Number(payroll.totalHours),
-      basePay: Number(payroll.basePay),
+      baseSalary: Number(payroll.baseSalary),
       overtimePay: Number(payroll.overtimePay),
-      nightPay: Number(payroll.nightPay),
-      weekendPay: Number(payroll.weekendPay),
-      holidayPay: Number(payroll.holidayPay),
+      nightAllowance: Number(payroll.nightAllowance),
+      weekendAllowance: Number(payroll.weekendAllowance),
       totalGrossPay: Number(payroll.totalGrossPay),
       status: payroll.status
     }));
@@ -158,9 +156,9 @@ export const getTimeEntriesReport = async (req: Request, res: Response) => {
         startTime: entry.startTime,
         endTime: entry.endTime,
         hoursWorked: Math.round(hoursWorked * 100) / 100,
-        breakMinutes: entry.breakMinutes || 0,
+        breakDuration: entry.breakDuration || 0,
         location: entry.location || '-',
-        notes: entry.notes || '-',
+        comment: entry.comment || '-',
         status: entry.status
       };
     });
@@ -325,43 +323,40 @@ export const getDeviationsReport = async (req: Request, res: Response) => {
       where.status = status;
     }
 
-    const conflicts = await prisma.conflictEntry.findMany({
-      where,
+    const teamEmployeesData = await prisma.employee.findMany({
+      where: { id: { in: employeeIds } },
       include: {
-        employee: {
-          include: {
-            user: {
-              select: {
-                name: true,
-                email: true
-              }
-            }
-          }
-        },
-        timeEntry: {
+        user: {
           select: {
-            date: true,
-            startTime: true,
-            endTime: true
+            name: true,
+            email: true
           }
         }
-      },
+      }
+    });
+    const employeeMap = new Map(teamEmployeesData.map(e => [e.id, e]));
+
+    const conflicts = await prisma.conflictEntry.findMany({
+      where,
       orderBy: { createdAt: 'desc' }
     });
 
-    const reportData = conflicts.map(conflict => ({
-      employeeName: conflict.employee.user.name,
-      employeeEmail: conflict.employee.user.email,
-      employeeNumber: conflict.employee.employeeNumber,
-      conflictType: conflict.conflictType,
-      description: conflict.description || '-',
-      date: conflict.timeEntry?.date || conflict.createdAt,
-      status: conflict.status,
-      resolvedAt: conflict.resolvedAt,
-      resolvedBy: conflict.resolvedBy || '-',
-      resolutionNote: conflict.resolutionNote || '-',
-      createdAt: conflict.createdAt
-    }));
+    const reportData = conflicts.map(conflict => {
+      const employee = employeeMap.get(conflict.employeeId);
+      return {
+        employeeName: employee?.user.name || 'Unknown',
+        employeeEmail: employee?.user.email || '-',
+        employeeNumber: employee?.employeeNumber || '-',
+        conflictType: conflict.conflictType,
+        description: conflict.conflictDescription || '-',
+        date: conflict.createdAt,
+        status: conflict.status,
+        resolvedAt: conflict.resolvedAt,
+        resolvedBy: conflict.resolvedBy || '-',
+        resolutionNote: conflict.resolutionNote || '-',
+        createdAt: conflict.createdAt
+      };
+    });
 
     if (format === 'csv') {
       const parser = new Parser();
@@ -379,7 +374,7 @@ export const getDeviationsReport = async (req: Request, res: Response) => {
         summary: {
           totalDeviations: reportData.length,
           pendingDeviations: reportData.filter(d => d.status === 'PENDING').length,
-          resolvedDeviations: reportData.filter(d => d.status === 'RESOLVED').length,
+          approvedDeviations: reportData.filter(d => d.status === 'APPROVED').length,
           rejectedDeviations: reportData.filter(d => d.status === 'REJECTED').length
         },
         deviations: reportData
@@ -448,7 +443,7 @@ export const getSalaryCostReport = async (req: Request, res: Response) => {
           employeeNumber: payroll.employee.employeeNumber,
           totalGrossPay: 0,
           totalHours: 0,
-          normalHours: 0,
+          regularHours: 0,
           overtimeHours: 0,
           payrollCount: 0
         };
@@ -456,7 +451,7 @@ export const getSalaryCostReport = async (req: Request, res: Response) => {
 
       acc[employeeName].totalGrossPay += Number(payroll.totalGrossPay);
       acc[employeeName].totalHours += Number(payroll.totalHours);
-      acc[employeeName].normalHours += Number(payroll.normalHours);
+      acc[employeeName].regularHours += Number(payroll.regularHours);
       acc[employeeName].overtimeHours += Number(payroll.overtimeHours);
       acc[employeeName].payrollCount += 1;
 
@@ -467,7 +462,7 @@ export const getSalaryCostReport = async (req: Request, res: Response) => {
       ...data,
       totalGrossPay: Math.round(data.totalGrossPay * 100) / 100,
       totalHours: Math.round(data.totalHours * 100) / 100,
-      normalHours: Math.round(data.normalHours * 100) / 100,
+      regularHours: Math.round(data.regularHours * 100) / 100,
       overtimeHours: Math.round(data.overtimeHours * 100) / 100
     }));
 
