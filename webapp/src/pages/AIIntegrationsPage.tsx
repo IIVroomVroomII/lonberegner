@@ -73,7 +73,7 @@ const AIIntegrationsPage = () => {
   const [newIntegration, setNewIntegration] = useState({
     name: '',
     description: '',
-    integrationType: 'API_IMPORT',
+    integrationType: 'DATA_IMPORT',
     targetSystem: '',
     documentationUrls: '',
   });
@@ -118,7 +118,7 @@ const AIIntegrationsPage = () => {
       setNewIntegration({
         name: '',
         description: '',
-        integrationType: 'API_IMPORT',
+        integrationType: 'DATA_IMPORT',
         targetSystem: '',
         documentationUrls: '',
       });
