@@ -8,6 +8,7 @@ import PayrollsPage from './pages/PayrollsPage';
 import AgreementsPage from './pages/AgreementsPage';
 import CalculationProfilesPage from './pages/CalculationProfilesPage';
 import ConflictsPage from './pages/ConflictsPage';
+import ReportsPage from './pages/ReportsPage';
 import Layout from './components/Layout';
 
 function App() {
@@ -28,6 +29,7 @@ function App() {
             <Route path="calculation-profiles" element={<CalculationProfilesPage />} />
             <Route path="conflicts" element={<ConflictsPage />} />
             <Route path="agreements" element={<AgreementsPage />} />
+            <Route path="reports" element={<ReportsPage />} />
           </Route>
         ) : (
           <Route path="*" element={<Navigate to="/login" replace />} />

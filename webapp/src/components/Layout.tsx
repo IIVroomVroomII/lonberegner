@@ -22,6 +22,7 @@ import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import PaymentIcon from '@mui/icons-material/Payment';
 import PeopleIcon from '@mui/icons-material/People';
 import DescriptionIcon from '@mui/icons-material/Description';
+import AssessmentIcon from '@mui/icons-material/Assessment';
 import LogoutIcon from '@mui/icons-material/Logout';
 import PaletteIcon from '@mui/icons-material/Palette';
 import CheckIcon from '@mui/icons-material/Check';
@@ -36,6 +37,7 @@ const menuItems = [
   { text: 'Medarbejdere', icon: <PeopleIcon />, path: '/employees' },
   { text: 'Tidsregistrering', icon: <AccessTimeIcon />, path: '/time-entries' },
   { text: 'Lønberegning', icon: <PaymentIcon />, path: '/payrolls' },
+  { text: 'Rapporter', icon: <AssessmentIcon />, path: '/reports' },
   { text: 'Beregningsprofiler', icon: <SettingsIcon />, path: '/calculation-profiles' },
   { text: 'Konfliktliste', icon: <WarningIcon />, path: '/conflicts' },
   { text: 'Overenskomster', icon: <DescriptionIcon />, path: '/agreements' },

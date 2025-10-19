@@ -128,3 +128,22 @@ export const importAPI = {
   },
   downloadTemplate: () => api.get('/import/template', { responseType: 'blob' }),
 };
+
+// Reports
+export const reportsAPI = {
+  getPayrollSummary: (params?: any) => api.get('/reports/payroll-summary', { params }),
+  getPayrollSummaryCSV: (params?: any) =>
+    api.get('/reports/payroll-summary', { params: { ...params, format: 'csv' }, responseType: 'blob' }),
+  getTimeEntries: (params?: any) => api.get('/reports/time-entries', { params }),
+  getTimeEntriesCSV: (params?: any) =>
+    api.get('/reports/time-entries', { params: { ...params, format: 'csv' }, responseType: 'blob' }),
+  getEmployeeHours: (params?: any) => api.get('/reports/employee-hours', { params }),
+  getEmployeeHoursCSV: (params?: any) =>
+    api.get('/reports/employee-hours', { params: { ...params, format: 'csv' }, responseType: 'blob' }),
+  getDeviations: (params?: any) => api.get('/reports/deviations', { params }),
+  getDeviationsCSV: (params?: any) =>
+    api.get('/reports/deviations', { params: { ...params, format: 'csv' }, responseType: 'blob' }),
+  getSalaryCost: (params?: any) => api.get('/reports/salary-cost', { params }),
+  getSalaryCostCSV: (params?: any) =>
+    api.get('/reports/salary-cost', { params: { ...params, format: 'csv' }, responseType: 'blob' }),
+};
