@@ -25,7 +25,7 @@ interface DashboardStats {
     activeEmployees: number;
     timeEntriesThisMonth: number;
     totalHoursThisMonth: number;
-    pendingConflicts: number;
+    pendingDeviations: number;
     payrollsThisMonth: number;
   };
   recentActivity: Array<{
@@ -34,7 +34,6 @@ interface DashboardStats {
     entityType: string;
     userName: string;
     createdAt: string;
-    changes: any;
   }>;
   upcomingPayrolls: Array<{
     id: string;
@@ -292,7 +291,7 @@ export default function DashboardPage() {
                   variant="h6"
                   sx={{ fontSize: '0.9rem', fontWeight: 500, color: '#d4d4d4' }}
                 >
-                  Konflikter
+                  Afvigelser
                 </Typography>
               </Box>
               <Typography
@@ -304,7 +303,7 @@ export default function DashboardPage() {
                   mb: 0.5,
                 }}
               >
-                {stats?.overview.pendingConflicts || 0}
+                {stats?.overview.pendingDeviations || 0}
               </Typography>
               <Typography
                 variant="body2"

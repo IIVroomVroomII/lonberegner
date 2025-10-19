@@ -15,15 +15,19 @@ export const getDashboardStats = async (req: Request, res: Response) => {
     // Get active employees count
     const activeEmployees = await prisma.employee.count({
       where: {
-        teamId,
-        isActive: true
+        user: {
+          teamId,
+          isActive: true
+        }
       },
     });
 
     // Get time entries this month
     const timeEntriesCount = await prisma.timeEntry.count({
       where: {
-        employee: { teamId },
+        employee: {
+          user: { teamId }
+        },
         date: {
           gte: monthStart,
           lte: monthEnd
@@ -34,31 +38,35 @@ export const getDashboardStats = async (req: Request, res: Response) => {
     // Get hours worked this month
     const timeEntriesData = await prisma.timeEntry.findMany({
       where: {
-        employee: { teamId },
+        employee: {
+          user: { teamId }
+        },
         date: {
           gte: monthStart,
           lte: monthEnd
         }
       },
       select: {
-        actualStartTime: true,
-        actualEndTime: true
+        startTime: true,
+        endTime: true
       }
     });
 
     const totalHoursThisMonth = timeEntriesData.reduce((total, entry) => {
-      if (entry.actualStartTime && entry.actualEndTime) {
-        const hours = (new Date(entry.actualEndTime).getTime() - new Date(entry.actualStartTime).getTime()) / (1000 * 60 * 60);
+      if (entry.startTime && entry.endTime) {
+        const hours = (new Date(entry.endTime).getTime() - new Date(entry.startTime).getTime()) / (1000 * 60 * 60);
         return total + hours;
       }
       return total;
     }, 0);
 
-    // Get pending conflicts count
-    const pendingConflicts = await prisma.conflictEntry.count({
+    // Get pending deviations count
+    const pendingDeviations = await prisma.conflictEntry.count({
       where: {
         timeEntry: {
-          employee: { teamId }
+          employee: {
+            user: { teamId }
+          }
         },
         status: 'PENDING'
       }
@@ -67,7 +75,9 @@ export const getDashboardStats = async (req: Request, res: Response) => {
     // Get payrolls this month
     const payrollsCount = await prisma.payroll.count({
       where: {
-        employee: { teamId },
+        employee: {
+          user: { teamId }
+        },
         payPeriodStart: {
           gte: monthStart
         }
@@ -78,10 +88,7 @@ export const getDashboardStats = async (req: Request, res: Response) => {
     const recentActivity = await prisma.auditLog.findMany({
       where: {
         user: {
-          OR: [
-            { teamId },
-            { employee: { teamId } }
-          ]
+          teamId
         }
       },
       orderBy: { createdAt: 'desc' },
@@ -100,7 +107,9 @@ export const getDashboardStats = async (req: Request, res: Response) => {
     const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
     const upcomingPayrolls = await prisma.payroll.findMany({
       where: {
-        employee: { teamId },
+        employee: {
+          user: { teamId }
+        },
         payPeriodEnd: {
           gte: now,
           lte: nextWeek
@@ -125,7 +134,9 @@ export const getDashboardStats = async (req: Request, res: Response) => {
     const employeeHours = await prisma.timeEntry.groupBy({
       by: ['employeeId'],
       where: {
-        employee: { teamId },
+        employee: {
+          user: { teamId }
+        },
         date: {
           gte: monthStart,
           lte: monthEnd
@@ -138,7 +149,7 @@ export const getDashboardStats = async (req: Request, res: Response) => {
 
     const topEmployees = await Promise.all(
       employeeHours
-        .sort((a, b) => b._count.id - a._count.id)
+        .sort((a, b) => (b._count?.id || 0) - (a._count?.id || 0))
         .slice(0, 5)
         .map(async (e) => {
           const employee = await prisma.employee.findUnique({
@@ -159,14 +170,14 @@ export const getDashboardStats = async (req: Request, res: Response) => {
               }
             },
             select: {
-              actualStartTime: true,
-              actualEndTime: true
+              startTime: true,
+              endTime: true
             }
           });
 
           const hours = entries.reduce((total, entry) => {
-            if (entry.actualStartTime && entry.actualEndTime) {
-              return total + (new Date(entry.actualEndTime).getTime() - new Date(entry.actualStartTime).getTime()) / (1000 * 60 * 60);
+            if (entry.startTime && entry.endTime) {
+              return total + (new Date(entry.endTime).getTime() - new Date(entry.startTime).getTime()) / (1000 * 60 * 60);
             }
             return total;
           }, 0);
@@ -174,7 +185,7 @@ export const getDashboardStats = async (req: Request, res: Response) => {
           return {
             employeeName: employee?.user.name || 'Unknown',
             hours: Math.round(hours * 10) / 10,
-            entries: e._count.id
+            entries: e._count?.id || 0
           };
         })
     );
@@ -186,7 +197,7 @@ export const getDashboardStats = async (req: Request, res: Response) => {
           activeEmployees,
           timeEntriesThisMonth: timeEntriesCount,
           totalHoursThisMonth: Math.round(totalHoursThisMonth * 10) / 10,
-          pendingConflicts,
+          pendingDeviations,
           payrollsThisMonth: payrollsCount
         },
         recentActivity: recentActivity.map(log => ({
@@ -194,10 +205,9 @@ export const getDashboardStats = async (req: Request, res: Response) => {
           action: log.action,
           entityType: log.entityType,
           userName: log.user.name,
-          createdAt: log.createdAt,
-          changes: log.changes
+          createdAt: log.createdAt
         })),
-        upcomingPayrolls: upcomingPayrolls.map(p => ({
+        upcomingPayrolls: upcomingPayrolls.map((p: any) => ({
           id: p.id,
           employeeName: p.employee.user.name,
           payPeriodStart: p.payPeriodStart,
@@ -231,21 +241,23 @@ export const getMonthlyTrends = async (req: Request, res: Response) => {
 
       const timeEntries = await prisma.timeEntry.findMany({
         where: {
-          employee: { teamId },
+          employee: {
+            user: { teamId }
+          },
           date: {
             gte: monthStart,
             lte: monthEnd
           }
         },
         select: {
-          actualStartTime: true,
-          actualEndTime: true
+          startTime: true,
+          endTime: true
         }
       });
 
       const hours = timeEntries.reduce((total, entry) => {
-        if (entry.actualStartTime && entry.actualEndTime) {
-          return total + (new Date(entry.actualEndTime).getTime() - new Date(entry.actualStartTime).getTime()) / (1000 * 60 * 60);
+        if (entry.startTime && entry.endTime) {
+          return total + (new Date(entry.endTime).getTime() - new Date(entry.startTime).getTime()) / (1000 * 60 * 60);
         }
         return total;
       }, 0);
