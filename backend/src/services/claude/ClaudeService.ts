@@ -196,7 +196,7 @@ Svar på dansk og vær venlig og hjælpsom.`;
     // Add previous chat history
     for (const msg of integration.chatMessages) {
       messages.push({
-        role: msg.role as 'user' | 'assistant',
+        role: msg.role.toLowerCase() as 'user' | 'assistant',
         content: msg.content,
       });
     }
