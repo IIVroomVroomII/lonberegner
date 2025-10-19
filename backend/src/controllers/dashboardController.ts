@@ -60,25 +60,34 @@ export const getDashboardStats = async (req: Request, res: Response) => {
       return total;
     }, 0);
 
+    // Get employee IDs for team
+    const teamEmployeeIds = await prisma.employee.findMany({
+      where: {
+        user: { teamId }
+      },
+      select: {
+        id: true
+      }
+    });
+    const employeeIds = teamEmployeeIds.map(e => e.id);
+
     // Get pending deviations count
     const pendingDeviations = await prisma.conflictEntry.count({
       where: {
-        timeEntry: {
-          employee: {
-            user: { teamId }
-          }
+        employeeId: {
+          in: employeeIds
         },
         status: 'PENDING'
       }
     });
 
     // Get payrolls this month
-    const payrollsCount = await prisma.payroll.count({
+    const payrollsCount = await prisma.payrollCalculation.count({
       where: {
-        employee: {
-          user: { teamId }
+        employeeId: {
+          in: employeeIds
         },
-        payPeriodStart: {
+        periodStart: {
           gte: monthStart
         }
       }
@@ -105,12 +114,12 @@ export const getDashboardStats = async (req: Request, res: Response) => {
 
     // Get upcoming payrolls (next 7 days)
     const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-    const upcomingPayrolls = await prisma.payroll.findMany({
+    const upcomingPayrolls = await prisma.payrollCalculation.findMany({
       where: {
-        employee: {
-          user: { teamId }
+        employeeId: {
+          in: employeeIds
         },
-        payPeriodEnd: {
+        periodEnd: {
           gte: now,
           lte: nextWeek
         }
@@ -126,7 +135,7 @@ export const getDashboardStats = async (req: Request, res: Response) => {
           }
         }
       },
-      orderBy: { payPeriodEnd: 'asc' },
+      orderBy: { periodEnd: 'asc' },
       take: 5
     });
 
@@ -210,8 +219,8 @@ export const getDashboardStats = async (req: Request, res: Response) => {
         upcomingPayrolls: upcomingPayrolls.map((p: any) => ({
           id: p.id,
           employeeName: p.employee.user.name,
-          payPeriodStart: p.payPeriodStart,
-          payPeriodEnd: p.payPeriodEnd,
+          payPeriodStart: p.periodStart,
+          payPeriodEnd: p.periodEnd,
           totalGrossPay: p.totalGrossPay,
           status: p.status
         })),
