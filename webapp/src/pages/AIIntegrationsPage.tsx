@@ -252,7 +252,7 @@ const AIIntegrationsPage = () => {
       <Grid container spacing={3}>
         {/* Integrations List */}
         <Grid item xs={12} md={4}>
-          <Paper sx={{ p: 2, height: 'calc(100vh - 200px)', overflow: 'auto' }}>
+          <Paper sx={{ p: 2, height: 'calc(100vh - 120px)', overflow: 'auto' }}>
             <Typography variant="h6" gutterBottom>
               Mine Integrationer
             </Typography>
@@ -289,7 +289,7 @@ const AIIntegrationsPage = () => {
         {/* Integration Details */}
         <Grid item xs={12} md={8}>
           {selectedIntegration ? (
-            <Paper sx={{ p: 3, height: 'calc(100vh - 200px)', display: 'flex', flexDirection: 'column' }}>
+            <Paper sx={{ p: 3, height: 'calc(100vh - 120px)', display: 'flex', flexDirection: 'column' }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
                 <Typography variant="h5">{selectedIntegration.name}</Typography>
                 <Box>
@@ -334,38 +334,38 @@ const AIIntegrationsPage = () => {
                           sx={{
                             mb: 2,
                             p: 3,
-                            backgroundColor: '#f5f5f5',
+                            backgroundColor: '#eeeeee',
                             borderRadius: 2,
-                            border: '2px dashed #ccc',
+                            border: '2px dashed #bbb',
                           }}
                         >
-                          <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                          <Typography variant="caption" sx={{ fontWeight: 600, color: '#555' }}>
                             Claude
                           </Typography>
-                          <Typography variant="body1" sx={{ mt: 1, mb: 2 }}>
+                          <Typography variant="body1" sx={{ mt: 1, mb: 2, color: '#000' }}>
                             Hej! Jeg er her for at hjælpe dig med at sætte denne integration op. 👋
                           </Typography>
-                          <Typography variant="body2" sx={{ mb: 1 }}>
+                          <Typography variant="body2" sx={{ mb: 1, color: '#000' }}>
                             For at komme i gang, kan du:
                           </Typography>
                           <Box component="ul" sx={{ pl: 2, mb: 2 }}>
                             <li>
-                              <Typography variant="body2">
+                              <Typography variant="body2" sx={{ color: '#000' }}>
                                 <strong>Upload API dokumentation</strong> (gå til "Filer" fanen) - PDF, JSON, Markdown osv.
                               </Typography>
                             </li>
                             <li>
-                              <Typography variant="body2">
+                              <Typography variant="body2" sx={{ color: '#000' }}>
                                 <strong>Fortæl mig om systemet</strong> - Hvilke data skal du hente? Hvilke endpoints bruges?
                               </Typography>
                             </li>
                             <li>
-                              <Typography variant="body2">
+                              <Typography variant="body2" sx={{ color: '#000' }}>
                                 <strong>Del eksempler</strong> - Vis mig hvordan data ser ud, så jeg kan hjælpe med at mappe felterne
                               </Typography>
                             </li>
                           </Box>
-                          <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                          <Typography variant="body2" sx={{ fontStyle: 'italic', color: '#555' }}>
                             Skriv din første besked nedenfor for at starte! 💬
                           </Typography>
                         </Box>
@@ -375,15 +375,29 @@ const AIIntegrationsPage = () => {
                           key={idx}
                           sx={{
                             mb: 2,
-                            p: 2,
-                            backgroundColor: msg.role === 'USER' ? '#e3f2fd' : '#f5f5f5',
+                            p: 2.5,
+                            backgroundColor: msg.role === 'USER' ? '#1976d2' : '#eeeeee',
                             borderRadius: 2,
+                            border: msg.role === 'USER' ? 'none' : '1px solid #ddd',
                           }}
                         >
-                          <Typography variant="caption" color="text.secondary">
+                          <Typography
+                            variant="caption"
+                            sx={{
+                              color: msg.role === 'USER' ? 'rgba(255, 255, 255, 0.8)' : 'text.secondary',
+                              fontWeight: 600
+                            }}
+                          >
                             {msg.role === 'USER' ? 'Dig' : 'Claude'}
                           </Typography>
-                          <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>
+                          <Typography
+                            variant="body1"
+                            sx={{
+                              whiteSpace: 'pre-wrap',
+                              color: msg.role === 'USER' ? '#fff' : '#000',
+                              mt: 0.5
+                            }}
+                          >
                             {msg.content}
                           </Typography>
                         </Box>
@@ -477,7 +491,7 @@ const AIIntegrationsPage = () => {
               </Box>
             </Paper>
           ) : (
-            <Paper sx={{ p: 3, height: 'calc(100vh - 200px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Paper sx={{ p: 3, height: 'calc(100vh - 120px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Typography variant="body1" color="text.secondary">
                 Vælg en integration fra listen eller opret en ny
               </Typography>
