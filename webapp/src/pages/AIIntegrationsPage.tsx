@@ -32,6 +32,7 @@ import {
   PlayArrow as PlayIcon,
   BugReport as TestIcon,
   Edit as EditIcon,
+  DeleteOutline as DeleteOutlineIcon,
 } from '@mui/icons-material';
 import { api } from '../services/api';
 
@@ -201,6 +202,32 @@ const AIIntegrationsPage = () => {
     }
   };
 
+  const handleClearChat = async () => {
+    if (!selectedIntegration) return;
+
+    const confirmed = window.confirm('Er du sikker på at du vil slette hele chat historikken? Dette kan ikke fortrydes.');
+    if (!confirmed) return;
+
+    try {
+      setLoading(true);
+      await api.delete(`/ai-integrations/${selectedIntegration.id}/chat`);
+
+      // Refresh integration to clear messages
+      const updatedIntegration = await api.get(`/ai-integrations/${selectedIntegration.id}`);
+      setSelectedIntegration(updatedIntegration.data.data);
+
+      // Update integrations list
+      setIntegrations(prev =>
+        prev.map(i => (i.id === selectedIntegration.id ? updatedIntegration.data.data : i))
+      );
+    } catch (error) {
+      console.error('Error clearing chat:', error);
+      alert('Fejl ved sletning af chat');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleTestConnection = async () => {
     if (!selectedIntegration) return;
 
@@ -318,11 +345,24 @@ const AIIntegrationsPage = () => {
                 </Typography>
               )}
 
-              <Tabs value={tabValue} onChange={(_, newValue) => setTabValue(newValue)} sx={{ mb: 2 }}>
-                <Tab label="Chat" />
-                <Tab label="Filer" />
-                <Tab label="Konfiguration" />
-              </Tabs>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <Tabs value={tabValue} onChange={(_, newValue) => setTabValue(newValue)}>
+                  <Tab label="Chat" />
+                  <Tab label="Filer" />
+                  <Tab label="Konfiguration" />
+                </Tabs>
+                {tabValue === 0 && (selectedIntegration.chatMessages || []).length > 0 && (
+                  <Button
+                    startIcon={<DeleteOutlineIcon />}
+                    onClick={handleClearChat}
+                    disabled={loading}
+                    size="small"
+                    sx={{ color: 'error.main' }}
+                  >
+                    Slet chat
+                  </Button>
+                )}
+              </Box>
 
               <Box sx={{ flex: 1, overflow: 'auto' }}>
                 {/* Chat Tab */}
