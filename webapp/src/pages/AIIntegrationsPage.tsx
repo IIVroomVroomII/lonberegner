@@ -34,7 +34,6 @@ import {
   Edit as EditIcon,
 } from '@mui/icons-material';
 import { api } from '../services/api';
-import ClaudeMessageDisplay from '../components/ClaudeMessageDisplay';
 
 interface AIIntegration {
   id: string;
@@ -372,11 +371,22 @@ const AIIntegrationsPage = () => {
                         </Box>
                       )}
                       {(selectedIntegration.chatMessages || []).map((msg, idx) => (
-                        <ClaudeMessageDisplay
+                        <Box
                           key={idx}
-                          content={msg.content}
-                          role={msg.role}
-                        />
+                          sx={{
+                            mb: 2,
+                            p: 2,
+                            backgroundColor: msg.role === 'USER' ? '#e3f2fd' : '#f5f5f5',
+                            borderRadius: 2,
+                          }}
+                        >
+                          <Typography variant="caption" color="text.secondary">
+                            {msg.role === 'USER' ? 'Dig' : 'Claude'}
+                          </Typography>
+                          <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>
+                            {msg.content}
+                          </Typography>
+                        </Box>
                       ))}
                       <div ref={chatEndRef} />
                     </Box>
