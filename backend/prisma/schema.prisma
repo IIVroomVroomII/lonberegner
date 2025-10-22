@@ -344,19 +344,42 @@ model AuditLog {
 // Integration konfiguration til lønsystemer
 model IntegrationConfig {
   id          String          @id @default(uuid())
-  name        String          @unique
+  teamId      String
+  name        String
   type        IntegrationType
+
+  // API konfiguration
   apiEndpoint String?
   apiKey      String? // Krypteret
+  partnerId   String? // For Dataløn
+  partnerSecret String? // Krypteret, for Dataløn
+  appId       String? // For Dataløn
   username    String?
-  isActive    Boolean         @default(true)
-  config      Json // Ekstra konfiguration
+  password    String? // Krypteret
 
-  lastSyncAt DateTime?
+  // Status
+  isActive    Boolean         @default(false)
+  status      IntegrationConfigStatus @default(NOT_CONFIGURED)
+
+  // Ekstra konfiguration (JSON)
+  config      Json? // Field mappings, sync settings, etc.
+
+  // Sync og test
+  lastSyncAt     DateTime?
+  lastTestedAt   DateTime?
+  lastTestSuccess Boolean?
+  lastErrorMessage String?
+
+  // Employee sync konfiguration
+  syncEmployees Boolean @default(false)
+  syncTimeEntries Boolean @default(false)
+  syncPayroll Boolean @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@unique([teamId, type])
+  @@index([teamId, isActive])
   @@map("integration_configs")
 }
 
@@ -367,6 +390,14 @@ enum IntegrationType {
   LESSOR // Lessor
   DATALON // Dataløn
   CUSTOM // Brugerdefineret
+}
+
+enum IntegrationConfigStatus {
+  NOT_CONFIGURED // Ikke konfigureret endnu
+  CONFIGURED // Konfigureret men ikke testet
+  TESTED_OK // Testet og virker
+  TESTED_ERROR // Testet med fejl
+  ACTIVE // Aktiv og synkroniserer
 }
 
 // § 11 Frihedskonto - For timelønnede medarbejdere (6,75% af ferieberettiget løn)

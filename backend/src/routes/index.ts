@@ -12,6 +12,7 @@ import importRoutes from './importRoutes';
 import reportsRoutes from './reportsRoutes';
 import auditLogRoutes from './auditLogRoutes';
 import aiIntegrationsRoutes from './aiIntegrationsRoutes';
+import integrationsRoutes from './integrationsRoutes';
 
 const router = Router();
 
@@ -29,5 +30,6 @@ router.use('/import', importRoutes);
 router.use('/reports', reportsRoutes);
 router.use('/audit-logs', auditLogRoutes);
 router.use('/ai-integrations', aiIntegrationsRoutes);
+router.use('/integrations', integrationsRoutes);
 
 export default router;
