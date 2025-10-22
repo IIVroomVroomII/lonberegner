@@ -30,6 +30,8 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import WarningIcon from '@mui/icons-material/Warning';
 import HistoryIcon from '@mui/icons-material/History';
 import SmartToyIcon from '@mui/icons-material/SmartToy';
+import CableIcon from '@mui/icons-material/Cable';
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import { useThemeStore, themes, type ThemeName } from '../store/themeStore';
 
 const drawerWidth = 240;
@@ -41,8 +43,9 @@ const menuItems = [
   { text: 'Lønberegning', icon: <PaymentIcon />, path: '/payrolls' },
   { text: 'Rapporter', icon: <AssessmentIcon />, path: '/reports' },
   { text: 'Beregningsprofiler', icon: <SettingsIcon />, path: '/calculation-profiles' },
-  { text: 'Konfliktliste', icon: <WarningIcon />, path: '/conflicts' },
+  { text: 'Afvigelser', icon: <ErrorOutlineIcon />, path: '/conflicts' },
   { text: 'Overenskomster', icon: <DescriptionIcon />, path: '/agreements' },
+  { text: 'Integrationer', icon: <CableIcon />, path: '/integrations' },
   { text: 'AI Integrationer', icon: <SmartToyIcon />, path: '/ai-integrations' },
   { text: 'Audit Log', icon: <HistoryIcon />, path: '/audit-logs' },
 ];

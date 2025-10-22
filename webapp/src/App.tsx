@@ -10,6 +10,7 @@ import CalculationProfilesPage from './pages/CalculationProfilesPage';
 import ConflictsPage from './pages/ConflictsPage';
 import ReportsPage from './pages/ReportsPage';
 import AuditLogsPage from './pages/AuditLogsPage';
+import IntegrationsPage from './pages/IntegrationsPage';
 import AIIntegrationsPage from './pages/AIIntegrationsPage';
 import Layout from './components/Layout';
 
@@ -32,6 +33,7 @@ function App() {
             <Route path="conflicts" element={<ConflictsPage />} />
             <Route path="agreements" element={<AgreementsPage />} />
             <Route path="reports" element={<ReportsPage />} />
+            <Route path="integrations" element={<IntegrationsPage />} />
             <Route path="ai-integrations" element={<AIIntegrationsPage />} />
             <Route path="audit-logs" element={<AuditLogsPage />} />
           </Route>
