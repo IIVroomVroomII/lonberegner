@@ -15,7 +15,6 @@ import AuditLogsPage from './pages/AuditLogsPage';
 import IntegrationsPage from './pages/IntegrationsPage';
 import AIIntegrationsPage from './pages/AIIntegrationsPage';
 import SubscriptionPage from './pages/SubscriptionPage';
-import ApiKeysPage from './pages/ApiKeysPage';
 import Layout from './components/Layout';
 
 function App() {
@@ -43,7 +42,6 @@ function App() {
             <Route path="ai-integrations" element={<AIIntegrationsPage />} />
             <Route path="audit-logs" element={<AuditLogsPage />} />
             <Route path="subscription" element={<SubscriptionPage />} />
-            <Route path="api-keys" element={<ApiKeysPage />} />
           </Route>
         ) : (
           <Route path="*" element={<Navigate to="/login" replace />} />

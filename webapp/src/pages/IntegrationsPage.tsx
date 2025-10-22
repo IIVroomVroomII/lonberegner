@@ -18,6 +18,8 @@ import {
   CircularProgress,
   Alert,
   IconButton,
+  Tabs,
+  Tab,
 } from '@mui/material';
 import {
   CheckCircle as CheckCircleIcon,
@@ -25,8 +27,11 @@ import {
   Settings as SettingsIcon,
   Close as CloseIcon,
   Sync as SyncIcon,
+  Cable as CableIcon,
+  VpnKey as VpnKeyIcon,
 } from '@mui/icons-material';
 import { api } from '../services/api';
+import ApiKeysPage from './ApiKeysPage';
 
 interface IntegrationConfig {
   id: string;
@@ -108,6 +113,7 @@ const standardIntegrations: Omit<StandardIntegration, 'config'>[] = [
 ];
 
 const IntegrationsPage = () => {
+  const [currentTab, setCurrentTab] = useState(0);
   const [integrations, setIntegrations] = useState<StandardIntegration[]>([]);
   const [loading, setLoading] = useState(true);
   const [configDialogOpen, setConfigDialogOpen] = useState(false);
@@ -267,7 +273,7 @@ const IntegrationsPage = () => {
     }
   };
 
-  if (loading) {
+  if (loading && currentTab === 0) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
         <CircularProgress />
@@ -277,14 +283,24 @@ const IntegrationsPage = () => {
 
   return (
     <Box>
-      <Box sx={{ mb: 4 }}>
+      <Box sx={{ mb: 3 }}>
         <Typography variant="h4" gutterBottom>
-          Standard Integrationer
+          Integrationer
         </Typography>
         <Typography variant="body1" color="text.secondary">
-          Forudbyggede integrationer til populære lønsystemer. Aktiver og konfigurer de integrationer du har brug for.
+          Administrer dine lønsystem integrationer og API nøgler.
         </Typography>
       </Box>
+
+      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+        <Tabs value={currentTab} onChange={(_, newValue) => setCurrentTab(newValue)}>
+          <Tab icon={<CableIcon />} label="Lønsystemer" iconPosition="start" />
+          <Tab icon={<VpnKeyIcon />} label="API Nøgler" iconPosition="start" />
+        </Tabs>
+      </Box>
+
+      {currentTab === 0 && (
+        <Box>
 
       <Grid container spacing={3}>
         {integrations.map((integration) => (
@@ -381,7 +397,7 @@ const IntegrationsPage = () => {
           Mangler du en integration?
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          Hvis dit lønsystem ikke er på listen, kan du bruge "AI Integrationer" menuen til at oprette en skræddersyet integration med hjælp fra Claude AI.
+          Kontakt support hvis dit lønsystem ikke er på listen.
         </Typography>
       </Box>
 
@@ -553,6 +569,14 @@ const IntegrationsPage = () => {
           </Button>
         </DialogActions>
       </Dialog>
+        </Box>
+      )}
+
+      {currentTab === 1 && (
+        <Box>
+          <ApiKeysPage />
+        </Box>
+      )}
     </Box>
   );
 };

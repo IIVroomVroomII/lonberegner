@@ -33,7 +33,6 @@ import SmartToyIcon from '@mui/icons-material/SmartToy';
 import CableIcon from '@mui/icons-material/Cable';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import SubscriptionsIcon from '@mui/icons-material/Subscriptions';
-import VpnKeyIcon from '@mui/icons-material/VpnKey';
 import { useThemeStore, themes, type ThemeName } from '../store/themeStore';
 
 const drawerWidth = 240;
@@ -48,7 +47,6 @@ const menuItems = [
   { text: 'Afvigelser', icon: <ErrorOutlineIcon />, path: '/conflicts' },
   { text: 'Overenskomster', icon: <DescriptionIcon />, path: '/agreements' },
   { text: 'Integrationer', icon: <CableIcon />, path: '/integrations' },
-  { text: 'API Nøgler', icon: <VpnKeyIcon />, path: '/api-keys' },
   { text: 'Abonnement', icon: <SubscriptionsIcon />, path: '/subscription' },
   { text: 'Audit Log', icon: <HistoryIcon />, path: '/audit-logs' },
 ];
