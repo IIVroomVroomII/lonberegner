@@ -643,6 +643,7 @@ model Team {
 
   calculationProfiles CalculationProfile[]
   subscription        Subscription?
+  apiKeys             ApiKey[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -955,4 +956,34 @@ enum ChatRole {
   USER // Bruger besked
   ASSISTANT // Claude's svar
   SYSTEM // System prompt
+}
+
+// API Keys - for programmatic access
+model ApiKey {
+  id          String   @id @default(uuid())
+  teamId      String
+  name        String // Beskrivende navn for nøglen
+  keyHash     String   @unique // Hashed API key
+  keyPrefix   String // Første 8 karakterer for visning (fx "sk_live_12345678...")
+
+  // Permissions
+  scopes      String[] // Array af scopes/permissions, fx ["read:employees", "write:timeEntries"]
+
+  // Status
+  isActive    Boolean  @default(true)
+  lastUsedAt  DateTime?
+  expiresAt   DateTime? // Optional expiration
+
+  // Metadata
+  createdBy   String? // User ID der oprettede nøglen
+  description String?
+
+  team        Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([teamId, isActive])
+  @@index([keyHash])
+  @@map("api_keys")
 }

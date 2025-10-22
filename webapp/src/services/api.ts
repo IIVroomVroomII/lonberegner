@@ -177,3 +177,11 @@ export const onboardingAPI = {
   skip: () => api.post('/onboarding/skip'),
   complete: () => api.post('/onboarding/complete'),
 };
+
+// API Keys
+export const apiKeysAPI = {
+  list: () => api.get('/api-keys'),
+  create: (data: any) => api.post('/api-keys', data),
+  deactivate: (id: string) => api.patch(`/api-keys/${id}/deactivate`),
+  delete: (id: string) => api.delete(`/api-keys/${id}`),
+};

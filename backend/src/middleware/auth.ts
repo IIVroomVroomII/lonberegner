@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import { AppError } from './errorHandler';
 import prisma from '../config/database';
 import { UserRole } from '@prisma/client';
+import { verifyApiKey } from '../controllers/apiKeyController';
 
 export interface AuthRequest extends Request {
   user?: {
@@ -10,6 +11,10 @@ export interface AuthRequest extends Request {
     email: string;
     role: UserRole;
     teamId?: string;
+  };
+  apiKey?: {
+    teamId: string;
+    scopes: string[];
   };
 }
 
@@ -26,6 +31,33 @@ export const authenticate = async (
     }
 
     const token = authHeader.substring(7);
+
+    // Check if it's an API key (starts with sk_live_)
+    if (token.startsWith('sk_live_')) {
+      const apiKeyData = await verifyApiKey(token);
+
+      if (!apiKeyData) {
+        throw new AppError('Ugyldig API nøgle', 401);
+      }
+
+      // Set apiKey context for API key authentication
+      req.apiKey = {
+        teamId: apiKeyData.teamId,
+        scopes: apiKeyData.scopes,
+      };
+
+      // Also set user context with teamId for compatibility with existing code
+      req.user = {
+        id: 'api-key', // Special ID for API key access
+        email: 'api@system',
+        role: 'TEAM_MEMBER' as UserRole, // Default role for API keys
+        teamId: apiKeyData.teamId,
+      };
+
+      return next();
+    }
+
+    // Otherwise, treat as JWT token
     const jwtSecret = process.env.JWT_SECRET;
 
     if (!jwtSecret) {

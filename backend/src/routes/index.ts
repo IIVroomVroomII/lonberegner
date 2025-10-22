@@ -15,6 +15,7 @@ import aiIntegrationsRoutes from './aiIntegrationsRoutes';
 import integrationsRoutes from './integrationsRoutes';
 import subscriptionRoutes from './subscriptionRoutes';
 import onboardingRoutes from './onboardingRoutes';
+import apiKeyRoutes from './apiKeyRoutes';
 
 const router = Router();
 
@@ -35,5 +36,6 @@ router.use('/ai-integrations', aiIntegrationsRoutes);
 router.use('/integrations', integrationsRoutes);
 router.use('/subscription', subscriptionRoutes);
 router.use('/onboarding', onboardingRoutes);
+router.use('/api-keys', apiKeyRoutes);
 
 export default router;
