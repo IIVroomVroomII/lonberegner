@@ -3,6 +3,7 @@ import { AuthRequest } from '../middleware/auth';
 import prisma from '../config/database';
 import { logger } from '../config/logger';
 import { DataloenService } from '../services/integrations/DataloenService';
+import { DanlonService } from '../services/integrations/DanlonService';
 
 /**
  * Get all integrations for team
@@ -229,6 +230,23 @@ export const testIntegration = async (req: Request, res: Response) => {
         break;
 
       case 'DANLON':
+        if (!integration.username || !integration.password || !integration.apiKey) {
+          return res.status(400).json({
+            success: false,
+            message: 'Manglende credentials. Kræver Client ID, Client Secret og Refresh Token.',
+          });
+        }
+
+        const danlonService = new DanlonService({
+          clientId: integration.username,
+          clientSecret: integration.password,
+          refreshToken: integration.apiKey,
+          environment: integration.apiEndpoint?.includes('demo') ? 'demo' : 'production',
+        });
+
+        testResult = await danlonService.testConnection();
+        break;
+
       case 'PROLON':
         testResult = {
           success: false,
@@ -425,6 +443,24 @@ export const syncIntegration = async (req: Request, res: Response) => {
         });
 
         syncResult = await dataloenService.syncEmployees(integration.lastSyncAt || undefined);
+        break;
+
+      case 'DANLON':
+        if (!integration.username || !integration.password || !integration.apiKey) {
+          return res.status(400).json({
+            success: false,
+            message: 'Manglende credentials',
+          });
+        }
+
+        const danlonServiceSync = new DanlonService({
+          clientId: integration.username,
+          clientSecret: integration.password,
+          refreshToken: integration.apiKey,
+          environment: integration.apiEndpoint?.includes('demo') ? 'demo' : 'production',
+        });
+
+        syncResult = await danlonServiceSync.syncEmployees();
         break;
 
       default:

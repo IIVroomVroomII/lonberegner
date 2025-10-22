@@ -460,14 +460,38 @@ const IntegrationsPage = () => {
 
           {selectedIntegration?.type === 'DANLON' && (
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <Alert severity="info">
-                Danløn integration er under udvikling. Kontakt support for mere information.
-              </Alert>
               <TextField
-                label="API Key"
+                label="API Endpoint"
                 fullWidth
+                value={formData.apiEndpoint || 'https://api.danlon.dk/graphql'}
+                onChange={(e) => setFormData({ ...formData, apiEndpoint: e.target.value })}
+                helperText="Brug 'https://api-demo.danlon.dk/graphql' for demo miljø"
+              />
+              <TextField
+                label="Client ID"
+                fullWidth
+                required
+                value={formData.username || ''}
+                onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                helperText="Client ID fra Danløn OAuth integration"
+              />
+              <TextField
+                label="Client Secret"
+                fullWidth
+                required
+                type="password"
+                value={formData.password || ''}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                helperText="Client Secret fra Danløn OAuth integration"
+              />
+              <TextField
+                label="Refresh Token"
+                fullWidth
+                required
+                type="password"
                 value={formData.apiKey || ''}
                 onChange={(e) => setFormData({ ...formData, apiKey: e.target.value })}
+                helperText="Refresh token fra Danløn OAuth flow"
               />
             </Box>
           )}
