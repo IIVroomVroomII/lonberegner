@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Box } from '@mui/material';
 import LoginPage from './pages/LoginPage';
+import SignUpPage from './pages/SignUpPage';
 import DashboardPage from './pages/DashboardPage';
 import EmployeesPage from './pages/EmployeesPage';
 import TimeEntriesPage from './pages/TimeEntriesPage';
@@ -12,6 +13,7 @@ import ReportsPage from './pages/ReportsPage';
 import AuditLogsPage from './pages/AuditLogsPage';
 import IntegrationsPage from './pages/IntegrationsPage';
 import AIIntegrationsPage from './pages/AIIntegrationsPage';
+import SubscriptionPage from './pages/SubscriptionPage';
 import Layout from './components/Layout';
 
 function App() {
@@ -21,6 +23,7 @@ function App() {
     <Box id="root">
       <Routes>
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/signup" element={<SignUpPage />} />
 
         {isAuthenticated ? (
           <Route path="/" element={<Layout />}>
@@ -36,6 +39,7 @@ function App() {
             <Route path="integrations" element={<IntegrationsPage />} />
             <Route path="ai-integrations" element={<AIIntegrationsPage />} />
             <Route path="audit-logs" element={<AuditLogsPage />} />
+            <Route path="subscription" element={<SubscriptionPage />} />
           </Route>
         ) : (
           <Route path="*" element={<Navigate to="/login" replace />} />

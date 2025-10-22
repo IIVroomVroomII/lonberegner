@@ -153,3 +153,19 @@ export const auditLogsAPI = {
   list: (params?: any) => api.get('/audit-logs', { params }),
   getStats: () => api.get('/audit-logs/stats'),
 };
+
+// Subscriptions
+export const subscriptionAPI = {
+  get: () => api.get('/subscription'),
+  create: (data: { paymentMethodId: string; priceId: string }) =>
+    api.post('/subscription', data),
+  cancel: (immediately?: boolean) =>
+    api.post('/subscription/cancel', { immediately }),
+  reactivate: () => api.post('/subscription/reactivate'),
+  updatePaymentMethod: (paymentMethodId: string) =>
+    api.post('/subscription/payment-method', { paymentMethodId }),
+  getInvoices: () => api.get('/subscription/invoices'),
+  getStripeConfig: () => api.get('/subscription/config'),
+  createCheckoutSession: (priceId: string) =>
+    api.post('/subscription/checkout-session', { priceId }),
+};
