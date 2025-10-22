@@ -633,12 +633,71 @@ model Team {
   contactPhone       String?
   isActive           Boolean @default(true)
 
+  // Stripe integration
+  stripeCustomerId String? @unique
+
   calculationProfiles CalculationProfile[]
+  subscription        Subscription?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@map("teams")
+}
+
+// Subscription model - håndtering af abonnementer
+model Subscription {
+  id     String @id @default(uuid())
+  teamId String @unique
+
+  // Stripe integration
+  stripeSubscriptionId   String  @unique
+  stripeCustomerId       String
+  stripePriceId          String
+  stripeCurrentPeriodEnd DateTime
+
+  // Subscription status
+  status SubscriptionStatus @default(TRIALING)
+
+  // Trial information
+  trialEnd DateTime?
+  trialType TrialType @default(STANDARD) // STANDARD (7 days) eller EARLY_ADOPTER (60 days)
+
+  // Billing
+  cancelAtPeriodEnd Boolean  @default(false)
+  canceledAt        DateTime?
+  endedAt           DateTime?
+
+  // Pricing (i øre/cents)
+  priceAmount   Int // fx 29900 for 299,00 kr
+  priceCurrency String @default("dkk")
+  interval      String @default("month") // "month" eller "year"
+
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([teamId, status])
+  @@index([stripeSubscriptionId])
+  @@index([status])
+  @@map("subscriptions")
+}
+
+enum SubscriptionStatus {
+  TRIALING // I prøveperiode
+  ACTIVE // Aktiv
+  PAST_DUE // Betaling fejlet
+  CANCELED // Opsagt (men stadig aktiv til periode slut)
+  INCOMPLETE // Ufuldstændig (mangler betaling)
+  INCOMPLETE_EXPIRED // Udløbet ufuldstændig
+  UNPAID // Ubetalt
+  PAUSED // På pause
+}
+
+enum TrialType {
+  STANDARD // 7 dages prøveperiode
+  EARLY_ADOPTER // 60 dages prøveperiode (inden 1. nov 2025)
 }
 
 // Beregningsprofiler - til fleksibel konfiguration af tidsberegninger
