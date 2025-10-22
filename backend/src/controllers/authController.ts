@@ -7,11 +7,19 @@ import { logger } from '../config/logger';
 
 export const register = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { email, password, name, role = 'EMPLOYEE' } = req.body;
+    const {
+      email,
+      password,
+      name,
+      organizationNumber,
+      contactEmail,
+      contactPhone,
+      role = 'TEAM_ADMIN',
+    } = req.body;
 
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
-      where: { email },
+      where: { email: contactEmail || email },
     });
 
     if (existingUser) {
@@ -21,27 +29,54 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
     // Hash password
     const passwordHash = await bcrypt.hash(password, 10);
 
-    // Create user
+    // Create team first
+    const team = await prisma.team.create({
+      data: {
+        name,
+        organizationNumber,
+        contactEmail: contactEmail || email,
+        contactPhone,
+        isActive: true,
+      },
+    });
+
+    // Create user with team
     const user = await prisma.user.create({
       data: {
-        email,
+        email: contactEmail || email,
         passwordHash,
         name,
         role,
+        teamId: team.id,
+        isActive: true,
       },
       select: {
         id: true,
         email: true,
         name: true,
         role: true,
+        teamId: true,
       },
     });
 
-    logger.info(`Ny bruger oprettet: ${user.email}`);
+    // Generate JWT token
+    const jwtSecret = process.env.JWT_SECRET;
+    if (!jwtSecret) {
+      throw new AppError('JWT_SECRET er ikke konfigureret', 500);
+    }
+
+    const token = jwt.sign(
+      { id: user.id, email: user.email, role: user.role, teamId: user.teamId },
+      jwtSecret as string,
+      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' } as jwt.SignOptions
+    );
+
+    logger.info(`Ny bruger og team oprettet: ${user.email}, Team: ${team.name}`);
 
     res.status(201).json({
-      status: 'success',
-      data: { user },
+      success: true,
+      token,
+      data: { user, team },
     });
   } catch (error) {
     next(error);
