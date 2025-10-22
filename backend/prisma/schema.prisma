@@ -636,6 +636,11 @@ model Team {
   // Stripe integration
   stripeCustomerId String? @unique
 
+  // Onboarding tracking
+  onboardingCompleted      Boolean @default(false)
+  currentOnboardingStep    Int     @default(0)
+  onboardingStepsCompleted Json?   // Array of completed step IDs
+
   calculationProfiles CalculationProfile[]
   subscription        Subscription?
 

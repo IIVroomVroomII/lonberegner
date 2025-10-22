@@ -14,6 +14,7 @@ import auditLogRoutes from './auditLogRoutes';
 import aiIntegrationsRoutes from './aiIntegrationsRoutes';
 import integrationsRoutes from './integrationsRoutes';
 import subscriptionRoutes from './subscriptionRoutes';
+import onboardingRoutes from './onboardingRoutes';
 
 const router = Router();
 
@@ -33,5 +34,6 @@ router.use('/audit-logs', auditLogRoutes);
 router.use('/ai-integrations', aiIntegrationsRoutes);
 router.use('/integrations', integrationsRoutes);
 router.use('/subscription', subscriptionRoutes);
+router.use('/onboarding', onboardingRoutes);
 
 export default router;

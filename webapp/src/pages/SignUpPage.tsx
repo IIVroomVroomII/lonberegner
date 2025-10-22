@@ -130,10 +130,10 @@ export default function SignUpPage() {
         priceId: STRIPE_PRICE_ID,
       });
 
-      // 3. Navigate to dashboard
+      // 3. Navigate to onboarding
       setActiveStep(2);
       setTimeout(() => {
-        navigate('/dashboard');
+        navigate('/onboarding');
       }, 2000);
     } catch (err: any) {
       console.error('Signup failed:', err);

@@ -169,3 +169,11 @@ export const subscriptionAPI = {
   createCheckoutSession: (priceId: string) =>
     api.post('/subscription/checkout-session', { priceId }),
 };
+
+// Onboarding
+export const onboardingAPI = {
+  getStatus: () => api.get('/onboarding/status'),
+  completeStep: (stepId: number) => api.post('/onboarding/complete-step', { stepId }),
+  skip: () => api.post('/onboarding/skip'),
+  complete: () => api.post('/onboarding/complete'),
+};
