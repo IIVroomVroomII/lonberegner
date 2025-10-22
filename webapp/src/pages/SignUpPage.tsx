@@ -201,18 +201,18 @@ export default function SignUpPage() {
             {trialInfo && (
               <Card sx={{ mt: 3, bgcolor: 'success.light' }}>
                 <CardContent>
-                  <Typography variant="h6" gutterBottom sx={{ color: 'success.dark' }}>
+                  <Typography variant="h6" gutterBottom sx={{ color: '#1a472a' }}>
                     🎉 Gratis prøveperiode
                   </Typography>
-                  <Typography sx={{ color: 'text.primary' }}>
+                  <Typography sx={{ color: '#000000' }}>
                     Du får <strong>{trialInfo.days} dage gratis</strong> at prøve systemet.
                     {trialInfo.type === 'EARLY_ADOPTER' && (
-                      <Typography variant="body2" sx={{ mt: 1, fontStyle: 'italic', color: 'text.primary' }}>
+                      <Typography variant="body2" sx={{ mt: 1, fontStyle: 'italic', color: '#000000' }}>
                         Early Adopter fordel - få 60 dage gratis!
                       </Typography>
                     )}
                   </Typography>
-                  <Typography variant="body2" sx={{ mt: 1, color: 'text.primary' }}>
+                  <Typography variant="body2" sx={{ mt: 1, color: '#000000' }}>
                     Du kan opsige når som helst i prøveperioden, og der trækkes intet beløb.
                   </Typography>
                 </CardContent>
