@@ -14,7 +14,7 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
       organizationNumber,
       contactEmail,
       contactPhone,
-      role = 'TEAM_ADMIN',
+      role = 'ADMIN',
     } = req.body;
 
     // Check if user already exists
