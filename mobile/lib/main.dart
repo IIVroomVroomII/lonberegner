@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'screens/login_screen.dart';
-import 'screens/home_screen.dart';
+import 'screens/work_screen.dart';
 import 'services/auth_service.dart';
+import 'providers/work_session_provider.dart';
 
 void main() {
   runApp(const LonberegningApp());
@@ -16,6 +17,7 @@ class LonberegningApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthService()),
+        ChangeNotifierProvider(create: (_) => WorkSessionProvider()),
       ],
       child: MaterialApp(
         title: 'Lønberegning',
@@ -26,7 +28,7 @@ class LonberegningApp extends StatelessWidget {
         home: Consumer<AuthService>(
           builder: (context, authService, _) {
             return authService.isAuthenticated
-                ? const HomeScreen()
+                ? const WorkScreen()
                 : const LoginScreen();
           },
         ),
