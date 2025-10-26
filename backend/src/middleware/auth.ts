@@ -8,7 +8,8 @@ import { verifyApiKey } from '../controllers/apiKeyController';
 export interface AuthRequest extends Request {
   user?: {
     id: string;
-    email: string;
+    email?: string;
+    employeeNumber?: string;
     role: UserRole;
     teamId?: string;
   };
@@ -66,7 +67,8 @@ export const authenticate = async (
 
     const decoded = jwt.verify(token, jwtSecret) as {
       id: string;
-      email: string;
+      email?: string;
+      employeeNumber?: string;
       role: UserRole;
     };
 
@@ -76,6 +78,7 @@ export const authenticate = async (
       select: {
         id: true,
         email: true,
+        employeeNumber: true,
         role: true,
         isActive: true,
         teamId: true,
@@ -88,7 +91,8 @@ export const authenticate = async (
 
     req.user = {
       id: user.id,
-      email: user.email,
+      email: user.email || undefined,
+      employeeNumber: user.employeeNumber || undefined,
       role: user.role,
       teamId: user.teamId || undefined,
     };

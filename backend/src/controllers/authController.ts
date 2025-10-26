@@ -92,7 +92,7 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
       where: { email },
     });
 
-    if (!user || !user.isActive) {
+    if (!user || !user.isActive || !user.passwordHash) {
       throw new AppError('Ugyldigt email eller password', 401);
     }
 
