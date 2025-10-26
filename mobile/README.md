@@ -6,6 +6,7 @@ Flutter mobilapp til tidsregistrering for chauffører under Transport- og Logist
 
 ### ✅ Implementeret
 
+**Core Features:**
 - **Start/Stop Arbejde**: Store intuitive knapper til at starte og afslutte arbejdsdagen
 - **Pause & Hvil**: Quick actions til at registrere pause og hvileperioder
 - **Live Timer**: Real-time opdatering af arbejdstid og pause
@@ -20,14 +21,32 @@ Flutter mobilapp til tidsregistrering for chauffører under Transport- og Logist
 - **Status Indicators**: Farvekodet status (Grøn=I gang, Orange=Pause, Grå=Ikke startet)
 - **Navigation Drawer**: Sekundære features pakket væk (historik, lønkvitteringer, indstillinger)
 
-### 🚧 Under Udvikling
+**Advanced Features:**
+- **GPS Location Service**: Automatisk detection af work type baseret på lokation
+  - Terminal, Lager, eller Kørsel
+  - Foruddefinerede arbejdsplaceringer
+  - Distance-based detection (200m radius)
+- **Offline Database**: SQLite lokal database for offline support
+  - Gem tidsregistreringer lokalt
+  - Sync når internet er tilgængeligt
+  - Unsynced entries tracking
+- **History Screen**: Komplet historik med kalender
+  - Måneds kalender visning
+  - Event markers på dage med registreringer
+  - Detaljeret liste pr. dag
+  - Status badges (Godkendt/Afventer/Afvist)
+- **Push Notifications**: Basic notification support
+  - Påmindelser om manglende registreringer
+  - Status opdateringer
 
-- GPS tracking for automatisk work type detection
-- Offline sync med lokal database
-- Push notifikationer
-- Lønkvitteringer og lønsedler
-- Historik med kalender visning
-- Profil og indstillinger
+### 🚧 Næste Features
+
+- Fuld offline sync manager med conflict resolution
+- PDF lønkvitteringer med export/share
+- Biometri authentication (Face ID/Fingerprint)
+- Dark mode
+- Multi-language support
+- Background location tracking for automatisk start/stop
 
 ## Arkitektur
 

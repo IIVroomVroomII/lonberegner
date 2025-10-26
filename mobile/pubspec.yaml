@@ -13,6 +13,7 @@ dependencies:
   # UI
   cupertino_icons: ^1.0.2
   flutter_svg: ^2.0.9
+  table_calendar: ^3.0.9
 
   # State management
   provider: ^6.1.1
@@ -23,12 +24,30 @@ dependencies:
 
   # Storage
   shared_preferences: ^2.2.2
+  sqflite: ^2.3.0
+  path: ^1.8.3
+  path_provider: ^2.1.1
 
   # Date/Time
   intl: ^0.18.1
 
   # Navigation
   go_router: ^13.0.0
+
+  # Location/GPS
+  geolocator: ^10.1.0
+  permission_handler: ^11.0.1
+
+  # Notifications
+  flutter_local_notifications: ^16.1.0
+  workmanager: ^0.5.1
+
+  # Security
+  local_auth: ^2.1.7
+
+  # PDF
+  pdf: ^3.10.7
+  printing: ^5.11.1
 
 dev_dependencies:
   flutter_test:
