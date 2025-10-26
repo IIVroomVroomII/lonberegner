@@ -13,8 +13,10 @@ datasource db {
 // Bruger model - både administratorer og medarbejdere
 model User {
   id           String   @id @default(uuid())
-  email        String   @unique
-  passwordHash String
+  email        String?   @unique // Optional - kun for ADMIN/PAYROLL_MANAGER
+  passwordHash String? // Optional - kun for ADMIN/PAYROLL_MANAGER
+  employeeNumber String? @unique // 4-cifret nummer for EMPLOYEE
+  pinHash      String? // 4-cifret PIN (hashed) for EMPLOYEE
   name         String
   role         UserRole @default(EMPLOYEE)
   teamId       String?
@@ -28,6 +30,7 @@ model User {
 
   @@index([isActive, role])
   @@index([email])
+  @@index([employeeNumber])
   @@index([teamId])
   @@map("users")
 }

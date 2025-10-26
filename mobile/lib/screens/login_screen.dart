@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
 
@@ -10,15 +11,15 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
+  final _employeeNumberController = TextEditingController();
+  final _pinController = TextEditingController();
   bool _isLoading = false;
   String? _errorMessage;
 
   @override
   void dispose() {
-    _emailController.dispose();
-    _passwordController.dispose();
+    _employeeNumberController.dispose();
+    _pinController.dispose();
     super.dispose();
   }
 
@@ -29,15 +30,15 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     final authService = Provider.of<AuthService>(context, listen: false);
-    final success = await authService.login(
-      _emailController.text,
-      _passwordController.text,
+    final success = await authService.mobileLogin(
+      _employeeNumberController.text,
+      _pinController.text,
     );
 
     setState(() {
       _isLoading = false;
       if (!success) {
-        _errorMessage = 'Login fejlede. Tjek email og password.';
+        _errorMessage = 'Login fejlede. Tjek medarbejdernummer og PIN.';
       }
     });
   }
@@ -68,23 +69,34 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               const SizedBox(height: 48),
               TextField(
-                controller: _emailController,
+                controller: _employeeNumberController,
                 decoration: const InputDecoration(
-                  labelText: 'Email',
+                  labelText: 'Medarbejdernummer (4 cifre)',
                   border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.email),
+                  prefixIcon: Icon(Icons.badge),
+                  hintText: '0000',
                 ),
-                keyboardType: TextInputType.emailAddress,
+                keyboardType: TextInputType.number,
+                maxLength: 4,
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                ],
               ),
               const SizedBox(height: 16),
               TextField(
-                controller: _passwordController,
+                controller: _pinController,
                 decoration: const InputDecoration(
-                  labelText: 'Password',
+                  labelText: 'PIN (4 cifre)',
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.lock),
+                  hintText: '0000',
                 ),
                 obscureText: true,
+                keyboardType: TextInputType.number,
+                maxLength: 4,
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                ],
               ),
               if (_errorMessage != null) ...[
                 const SizedBox(height: 16),

@@ -17,3 +17,10 @@ export const registerSchema = z.object({
     email: z.string().email('Ugyldig email adresse').optional(), // For backward compatibility
   }),
 });
+
+export const mobileLoginSchema = z.object({
+  body: z.object({
+    employeeNumber: z.string().regex(/^\d{4}$/, 'Medarbejdernummer skal være 4 cifre'),
+    pin: z.string().regex(/^\d{4}$/, 'PIN skal være 4 cifre'),
+  }),
+});

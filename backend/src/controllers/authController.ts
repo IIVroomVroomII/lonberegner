@@ -134,6 +134,81 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
   }
 };
 
+// Mobile app login - employeeNumber + PIN
+export const mobileLogin = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { employeeNumber, pin } = req.body;
+
+    // Validate input
+    if (!employeeNumber || !pin) {
+      throw new AppError('Medarbejdernummer og PIN er påkrævet', 400);
+    }
+
+    // Validate format (4 digits each)
+    if (!/^\d{4}$/.test(employeeNumber) || !/^\d{4}$/.test(pin)) {
+      throw new AppError('Ugyldigt medarbejdernummer eller PIN', 401);
+    }
+
+    // Find user by employeeNumber
+    const user = await prisma.user.findUnique({
+      where: { employeeNumber },
+      include: {
+        employee: true,
+      },
+    });
+
+    if (!user || !user.isActive || user.role !== 'EMPLOYEE') {
+      throw new AppError('Ugyldigt medarbejdernummer eller PIN', 401);
+    }
+
+    // Check PIN
+    if (!user.pinHash) {
+      throw new AppError('PIN ikke sat. Kontakt din administrator', 401);
+    }
+
+    const isPinValid = await bcrypt.compare(pin, user.pinHash);
+
+    if (!isPinValid) {
+      throw new AppError('Ugyldigt medarbejdernummer eller PIN', 401);
+    }
+
+    // Generate JWT
+    const jwtSecret = process.env.JWT_SECRET;
+    if (!jwtSecret) {
+      throw new AppError('JWT_SECRET er ikke konfigureret', 500);
+    }
+
+    const token = jwt.sign(
+      {
+        id: user.id,
+        employeeNumber: user.employeeNumber,
+        role: user.role,
+        teamId: user.teamId
+      },
+      jwtSecret as string,
+      { expiresIn: '30d' } as jwt.SignOptions // Longer expiry for mobile
+    );
+
+    logger.info(`Mobile bruger logget ind: ${user.employeeNumber}`);
+
+    res.json({
+      status: 'success',
+      data: {
+        token,
+        user: {
+          id: user.id,
+          employeeNumber: user.employeeNumber,
+          name: user.name,
+          role: user.role,
+          employee: user.employee,
+        },
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const getMe = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const userId = (req as any).user.id;
@@ -143,6 +218,7 @@ export const getMe = async (req: Request, res: Response, next: NextFunction) => 
       select: {
         id: true,
         email: true,
+        employeeNumber: true,
         name: true,
         role: true,
         employee: true,

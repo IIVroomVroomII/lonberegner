@@ -38,6 +38,24 @@ class AuthService with ChangeNotifier {
     }
   }
 
+  Future<bool> mobileLogin(String employeeNumber, String pin) async {
+    try {
+      final response = await ApiService.post('/auth/mobile-login', {
+        'employeeNumber': employeeNumber,
+        'pin': pin,
+      });
+
+      _token = response['data']['token'];
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('token', _token!);
+      _isAuthenticated = true;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
   Future<void> logout() async {
     _token = null;
     _isAuthenticated = false;
