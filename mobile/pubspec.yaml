@@ -38,9 +38,9 @@ dependencies:
   geolocator: ^10.1.0
   permission_handler: ^11.0.1
 
-  # Notifications
-  flutter_local_notifications: ^16.1.0
-  workmanager: ^0.5.1
+  # Notifications (temporarily disabled for build)
+  # flutter_local_notifications: ^16.1.0
+  # workmanager: ^0.5.1
 
   # Security
   local_auth: ^2.1.7
