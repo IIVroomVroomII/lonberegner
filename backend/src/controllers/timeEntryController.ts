@@ -152,7 +152,13 @@ export const listTimeEntries = async (
     }
 
     if (status) {
-      where.status = status;
+      // Handle comma-separated status values from mobile app
+      const statusString = status as string;
+      if (statusString.includes(',')) {
+        where.status = { in: statusString.split(',') };
+      } else {
+        where.status = statusString;
+      }
     }
 
     if (dateFrom || dateTo) {
