@@ -2,11 +2,12 @@ import { z } from 'zod';
 
 export const createTimeEntrySchema = z.object({
   body: z.object({
+    employeeId: z.string().uuid('Ugyldigt medarbejder ID'),
     date: z.coerce.date(),
     startTime: z.coerce.date(),
     endTime: z.coerce.date().optional().nullable(),
     breakDuration: z.number().int().min(0).max(480).default(0),
-    location: z.string().min(1, 'Lokation er påkrævet').max(200),
+    location: z.string().min(1).max(200).optional().nullable(),
     route: z.string().max(200).optional().nullable(),
     taskType: z.enum(['DISTRIBUTION', 'TERMINAL_WORK', 'DRIVING', 'MOVING', 'LOADING', 'UNLOADING']),
     isIrregularHours: z.boolean().default(false),
