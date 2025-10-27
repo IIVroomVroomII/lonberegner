@@ -21,7 +21,11 @@ export const createTimeEntry = async (
       comment,
     } = req.body;
 
+    // Log received data for debugging
+    logger.info(`Creating time entry - received: employeeId=${employeeId}, date=${date}, startTime=${startTime}, taskType=${taskType}`);
+
     if (!employeeId || !date || !startTime || !taskType) {
+      logger.error(`Missing required fields: employeeId=${employeeId}, date=${date}, startTime=${startTime}, taskType=${taskType}`);
       throw new AppError('employeeId, date, startTime og taskType er påkrævet', 400);
     }
 
