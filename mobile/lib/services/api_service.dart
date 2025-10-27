@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class ApiService {
-  static const String baseUrl = 'http://localhost:3000/api/v1'; // Change for production
+  static const String baseUrl = 'https://lonberegner-62a2db4ebd03.herokuapp.com/api/v1';
 
   static Future<Map<String, dynamic>> get(String endpoint, {String? token}) async {
     final headers = {
