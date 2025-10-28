@@ -3,7 +3,12 @@ import 'package:provider/provider.dart';
 import 'dart:async';
 import '../providers/work_session_provider.dart';
 import '../services/auth_service.dart';
+import '../widgets/start_work_dialog.dart';
 import 'end_day_wizard.dart';
+import 'statistics_screen.dart';
+import 'history_screen.dart';
+import 'settings_screen.dart';
+import 'pay_slips_screen.dart';
 
 class WorkScreen extends StatefulWidget {
   const WorkScreen({super.key});
@@ -20,7 +25,15 @@ class _WorkScreenState extends State<WorkScreen> {
     super.initState();
     // Load today's entry when screen loads
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<WorkSessionProvider>().loadTodaysEntry();
+      final authService = context.read<AuthService>();
+      final workSession = context.read<WorkSessionProvider>();
+
+      // Set auth token for GPS tracking
+      if (authService.token != null) {
+        workSession.setAuthToken(authService.token!);
+      }
+
+      workSession.loadTodaysEntry();
     });
 
     // Update UI every second for live timer
@@ -193,46 +206,142 @@ class _WorkScreenState extends State<WorkScreen> {
 
   Widget _buildMainActionButton(BuildContext context, WorkSessionProvider workSession) {
     final authService = context.read<AuthService>();
-    final employeeId = 'TODO'; // Get from auth service
+    final employeeId = authService.userId ?? '';
 
     if (!workSession.isWorking) {
-      return ElevatedButton(
-        onPressed: workSession.isLoading
-            ? null
-            : () async {
-                final success = await workSession.startWork(
-                  employeeId: employeeId,
-                  workType: 'DRIVING',
-                );
+      return Column(
+        children: [
+          // Smart Start Button - GPS determines work type automatically
+          ElevatedButton(
+            onPressed: workSession.isLoading
+                ? null
+                : () async {
+                    final confirmed = await showDialog<bool>(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Row(
+                          children: [
+                            Icon(Icons.auto_awesome, color: Colors.blue),
+                            SizedBox(width: 8),
+                            Text('Smart Start'),
+                          ],
+                        ),
+                        content: const Text(
+                          'GPS vil automatisk registrere din arbejdstype baseret på din position og hastighed.\n\n'
+                          'Du kan se og godkende kategoriseringen når du afslutter arbejdsdagen.',
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.of(context).pop(false),
+                            child: const Text('Annuller'),
+                          ),
+                          ElevatedButton(
+                            onPressed: () => Navigator.of(context).pop(true),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.blue,
+                              foregroundColor: Colors.white,
+                            ),
+                            child: const Text('Start Smart'),
+                          ),
+                        ],
+                      ),
+                    );
 
-                if (success && mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Arbejde startet')),
-                  );
-                }
-              },
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.green,
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(vertical: 24),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.play_arrow, size: 32),
-            const SizedBox(width: 12),
-            Text(
-              'Start Arbejde',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
+                    if (confirmed == true && mounted) {
+                      final success = await workSession.startWork(
+                        employeeId: employeeId,
+                        workType: 'SMART', // Special marker for smart mode
+                        location: null,
+                        route: null,
+                        comment: 'Smart Start - GPS kategorisering',
+                      );
+
+                      if (success && mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Smart Start aktiveret - GPS sporer nu'),
+                            duration: Duration(seconds: 3),
+                          ),
+                        );
+                      }
+                    }
+                  },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.blue,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 24),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
               ),
             ),
-          ],
-        ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.auto_awesome, size: 32),
+                const SizedBox(width: 12),
+                Text(
+                  'Smart Start',
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // Regular Manual Start Button
+          OutlinedButton(
+            onPressed: workSession.isLoading
+                ? null
+                : () async {
+                    // Show dialog to collect work details
+                    final result = await showDialog<Map<String, String?>>(
+                      context: context,
+                      builder: (context) => const StartWorkDialog(),
+                    );
+
+                    if (result != null) {
+                      final success = await workSession.startWork(
+                        employeeId: employeeId,
+                        workType: result['taskType'] ?? 'DRIVING',
+                        location: result['location'],
+                        route: result['route'],
+                        comment: result['comment'],
+                      );
+
+                      if (success && mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Arbejde startet')),
+                        );
+                      }
+                    }
+                  },
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Colors.green,
+              padding: const EdgeInsets.symmetric(vertical: 20),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              side: const BorderSide(color: Colors.green, width: 2),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.edit, size: 24),
+                const SizedBox(width: 12),
+                Text(
+                  'Manuel Start (vælg type)',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: Colors.green,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       );
     }
 
@@ -466,18 +575,18 @@ class _WorkScreenState extends State<WorkScreen> {
             decoration: BoxDecoration(
               color: Theme.of(context).primaryColor,
             ),
-            child: const Column(
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                CircleAvatar(
+                const CircleAvatar(
                   radius: 32,
                   child: Icon(Icons.person, size: 32),
                 ),
-                SizedBox(height: 12),
+                const SizedBox(height: 12),
                 Text(
-                  'Navn Navnesen',
-                  style: TextStyle(color: Colors.white, fontSize: 18),
+                  authService.userName ?? 'Medarbejder',
+                  style: const TextStyle(color: Colors.white, fontSize: 18),
                 ),
               ],
             ),
@@ -486,21 +595,48 @@ class _WorkScreenState extends State<WorkScreen> {
             leading: const Icon(Icons.history),
             title: const Text('Historik'),
             onTap: () {
-              // Navigate to history
+              Navigator.of(context).pop(); // Close drawer
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const HistoryScreen(),
+                ),
+              );
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.bar_chart),
+            title: const Text('Statistik'),
+            onTap: () {
+              Navigator.of(context).pop(); // Close drawer
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const StatisticsScreen(),
+                ),
+              );
             },
           ),
           ListTile(
             leading: const Icon(Icons.receipt),
             title: const Text('Lønkvitteringer'),
             onTap: () {
-              // Navigate to pay slips
+              Navigator.of(context).pop(); // Close drawer
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const PaySlipsScreen(),
+                ),
+              );
             },
           ),
           ListTile(
             leading: const Icon(Icons.settings),
             title: const Text('Indstillinger'),
             onTap: () {
-              // Navigate to settings
+              Navigator.of(context).pop(); // Close drawer
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const SettingsScreen(),
+                ),
+              );
             },
           ),
           const Divider(),

@@ -2,14 +2,17 @@ import 'package:flutter/foundation.dart';
 import 'dart:async';
 import '../models/time_entry.dart';
 import '../services/time_entry_service.dart';
+import '../services/gps_tracking_service.dart';
 
 class WorkSessionProvider with ChangeNotifier {
   final TimeEntryService _timeEntryService = TimeEntryService();
+  final GpsTrackingService _gpsTrackingService = GpsTrackingService();
 
   TimeEntry? _currentEntry;
   bool _isLoading = false;
   String? _error;
   Timer? _updateTimer;
+  String? _authToken;
 
   TimeEntry? get currentEntry => _currentEntry;
   bool get isLoading => _isLoading;
@@ -40,7 +43,13 @@ class WorkSessionProvider with ChangeNotifier {
   @override
   void dispose() {
     _updateTimer?.cancel();
+    _gpsTrackingService.dispose();
     super.dispose();
+  }
+
+  // Set auth token for GPS tracking
+  void setAuthToken(String token) {
+    _authToken = token;
   }
 
   // Load today's entry
@@ -64,6 +73,8 @@ class WorkSessionProvider with ChangeNotifier {
     required String employeeId,
     String? workType,
     String? location,
+    String? route,
+    String? comment,
   }) async {
     _isLoading = true;
     _error = null;
@@ -74,10 +85,25 @@ class WorkSessionProvider with ChangeNotifier {
         employeeId: employeeId,
         workType: workType,
         location: location,
+        route: route,
+        comment: comment,
       );
 
       if (entry != null) {
         _currentEntry = entry;
+
+        // Start GPS tracking if we have auth token
+        if (_authToken != null && entry.id != null) {
+          final trackingStarted = await _gpsTrackingService.startTracking(
+            entry.id!,
+            _authToken!,
+          );
+
+          if (kDebugMode) {
+            print('GPS tracking ${trackingStarted ? "started" : "failed to start"}');
+          }
+        }
+
         _isLoading = false;
         notifyListeners();
         return true;
@@ -108,6 +134,13 @@ class WorkSessionProvider with ChangeNotifier {
     notifyListeners();
 
     try {
+      // Stop GPS tracking first
+      await _gpsTrackingService.stopTracking();
+
+      if (kDebugMode) {
+        print('GPS tracking stopped');
+      }
+
       final entry = await _timeEntryService.endWork(_currentEntry!.id!);
 
       if (entry != null) {

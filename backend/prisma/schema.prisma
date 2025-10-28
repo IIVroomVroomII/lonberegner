@@ -109,6 +109,7 @@ model Employee {
   turnusSchedules     TurnusSchedule[]
   timeBankEntries     TimeBankEntry[]
   trainingActivities  TrainingActivity[]
+  geofences           Geofence[] // Geofences specifikt for denne medarbejder
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -162,6 +163,7 @@ model TimeEntry {
 
   employee         Employee          @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   payrollComponent PayrollComponent?
+  gpsTracking      GpsTracking[] // GPS tracking punkter for denne arbejdsdag
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -179,6 +181,7 @@ enum TaskType {
   MOVING // Flytning
   LOADING // Lastning
   UNLOADING // Losning
+  SMART // Smart Start - GPS kategorisering
 }
 
 enum TimeEntryStatus {
@@ -738,6 +741,7 @@ model CalculationProfile {
   // Relationer
   team      Team       @relation(fields: [teamId], references: [id], onDelete: Cascade)
   employees Employee[]
+  geofences Geofence[] // Geofences knyttet til denne beregningsprofil
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -990,4 +994,62 @@ model ApiKey {
   @@index([teamId, isActive])
   @@index([keyHash])
   @@map("api_keys")
+}
+
+// Geofence - GPS zoner til automatisk arbejdstype kategorisering
+model Geofence {
+  id          String   @id @default(uuid())
+  name        String // fx "Lager", "Terminal", "Værksted"
+  description String?
+
+  // GPS koordinater
+  latitude  Decimal @db.Decimal(10, 8) // fx 55.67609400
+  longitude Decimal @db.Decimal(11, 8) // fx 12.56833800
+  radius    Int // Radius i meter
+
+  // Arbejdstype der bruges når inden for denne zone
+  taskType TaskType
+
+  // Tilknytning - enten til specifik medarbejder eller til profil
+  employeeId           String?
+  calculationProfileId String?
+  employee             Employee?           @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  calculationProfile   CalculationProfile? @relation(fields: [calculationProfileId], references: [id], onDelete: Cascade)
+
+  // Status
+  isActive  Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([employeeId, isActive])
+  @@index([calculationProfileId, isActive])
+  @@map("geofences")
+}
+
+// GPS tracking - tracker medarbejderens position under arbejdsdagen
+model GpsTracking {
+  id          String   @id @default(uuid())
+  timeEntryId String
+
+  // GPS data
+  timestamp DateTime
+  latitude  Decimal  @db.Decimal(10, 8)
+  longitude Decimal  @db.Decimal(11, 8)
+  accuracy  Decimal? @db.Decimal(10, 2) // I meter
+  speed     Decimal? @db.Decimal(10, 2) // I m/s
+  heading   Decimal? @db.Decimal(5, 2) // Kompasretning i grader (0-360)
+
+  // Beregnet information
+  isStationary Boolean @default(false) // Om medarbejderen står stille
+  isInGeofence Boolean @default(false) // Om inden for en geofence
+  geofenceId   String?
+
+  timeEntry TimeEntry @relation(fields: [timeEntryId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([timeEntryId, timestamp])
+  @@index([timestamp])
+  @@map("gps_tracking")
 }

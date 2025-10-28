@@ -16,6 +16,9 @@ import integrationsRoutes from './integrationsRoutes';
 import subscriptionRoutes from './subscriptionRoutes';
 import onboardingRoutes from './onboardingRoutes';
 import apiKeyRoutes from './apiKeyRoutes';
+import geofenceRoutes from './geofenceRoutes';
+import gpsTrackingRoutes from './gpsTrackingRoutes';
+import workCategorizationRoutes from './workCategorizationRoutes';
 
 const router = Router();
 
@@ -37,5 +40,8 @@ router.use('/integrations', integrationsRoutes);
 router.use('/subscription', subscriptionRoutes);
 router.use('/onboarding', onboardingRoutes);
 router.use('/api-keys', apiKeyRoutes);
+router.use('/geofences', geofenceRoutes);
+router.use('/gps-tracking', gpsTrackingRoutes);
+router.use('/work-categorization', workCategorizationRoutes);
 
 export default router;

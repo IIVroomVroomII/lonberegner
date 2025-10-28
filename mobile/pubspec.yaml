@@ -1,7 +1,7 @@
 name: lonberegning_mobile
 description: Mobilapp til lønberegning system
 publish_to: 'none'
-version: 1.7.0+7
+version: 2.0.1+16
 
 environment:
   sdk: '>=3.0.0 <4.0.0'

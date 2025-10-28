@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../models/time_entry.dart';
 import '../services/time_entry_service.dart';
 import 'package:intl/intl.dart';
+import 'time_entry_detail_screen.dart';
 
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key});
@@ -150,6 +151,18 @@ class _HistoryScreenState extends State<HistoryScreen> {
               label: Text(_getStatusText(entry.status)),
               backgroundColor: _getStatusColor(entry.status).withOpacity(0.2),
             ),
+            onTap: () async {
+              final result = await Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => TimeEntryDetailScreen(entry: entry),
+                ),
+              );
+
+              // Reload entries if the entry was deleted or modified
+              if (result == true) {
+                _loadEntries();
+              }
+            },
           ),
         );
       },
@@ -188,10 +201,18 @@ class _HistoryScreenState extends State<HistoryScreen> {
     switch (workType) {
       case 'DRIVING':
         return Icons.local_shipping;
-      case 'TERMINAL':
+      case 'TERMINAL_WORK':
         return Icons.business;
-      case 'WAREHOUSE':
-        return Icons.warehouse;
+      case 'DISTRIBUTION':
+        return Icons.delivery_dining;
+      case 'LOADING':
+        return Icons.archive;
+      case 'UNLOADING':
+        return Icons.unarchive;
+      case 'MOVING':
+        return Icons.moving;
+      case 'SMART':
+        return Icons.auto_awesome;
       default:
         return Icons.work;
     }
