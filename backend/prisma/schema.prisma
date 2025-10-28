@@ -149,6 +149,7 @@ model TimeEntry {
   startTime        DateTime
   endTime          DateTime?
   breakDuration    Int             @default(0) // I minutter
+  breaks           Json?           // Array of break periods with startTime, endTime, type
   location         String?
   route            String?
   taskType         TaskType

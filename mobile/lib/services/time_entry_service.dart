@@ -27,7 +27,7 @@ class TimeEntryService {
       final dateStr = '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
 
       final response = await http.get(
-        Uri.parse('$baseUrl/time-entries?date=$dateStr&status=DRAFT,PENDING'),
+        Uri.parse('$baseUrl/time-entries?date=$dateStr&status=PENDING'),
         headers: headers,
       );
 
@@ -60,9 +60,8 @@ class TimeEntryService {
         'employeeId': employeeId,
         'date': now.toIso8601String().split('T')[0],
         'startTime': now.toIso8601String(),
-        'workType': workType ?? 'DRIVING',
+        'taskType': workType ?? 'DRIVING',
         'location': location,
-        'status': 'DRAFT',
       });
 
       final response = await http.post(
@@ -73,7 +72,7 @@ class TimeEntryService {
 
       if (response.statusCode == 201) {
         final data = json.decode(response.body);
-        return TimeEntry.fromJson(data['data']);
+        return TimeEntry.fromJson(data['data']['timeEntry']);
       }
       return null;
     } catch (e) {
@@ -101,7 +100,7 @@ class TimeEntryService {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        return TimeEntry.fromJson(data['data']);
+        return TimeEntry.fromJson(data['data']['timeEntry']);
       }
       return null;
     } catch (e) {
@@ -138,7 +137,7 @@ class TimeEntryService {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        return TimeEntry.fromJson(data['data']);
+        return TimeEntry.fromJson(data['data']['timeEntry']);
       }
       return null;
     } catch (e) {
@@ -181,7 +180,7 @@ class TimeEntryService {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        return TimeEntry.fromJson(data['data']);
+        return TimeEntry.fromJson(data['data']['timeEntry']);
       }
       return null;
     } catch (e) {
@@ -201,7 +200,7 @@ class TimeEntryService {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        return TimeEntry.fromJson(data['data']);
+        return TimeEntry.fromJson(data['data']['timeEntry']);
       }
       return null;
     } catch (e) {
@@ -263,7 +262,7 @@ class TimeEntryService {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        return TimeEntry.fromJson(data['data']);
+        return TimeEntry.fromJson(data['data']['timeEntry']);
       }
       return null;
     } catch (e) {
