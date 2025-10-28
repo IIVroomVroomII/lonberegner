@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../providers/work_session_provider.dart';
+import '../services/auth_service.dart';
+import '../services/work_categorization_service.dart';
+import '../models/work_categorization.dart';
 
 class EndDayWizard extends StatefulWidget {
   final WorkSessionProvider workSession;
@@ -16,15 +20,39 @@ class _EndDayWizardState extends State<EndDayWizard> {
   TimeOfDay? _breakStart;
   TimeOfDay? _breakEnd;
 
+  // GPS categorization
+  bool _isLoadingCategorization = false;
+  CategorizationResult? _categorizationResult;
+  bool _hasSmartMode = false;
+
   @override
   void initState() {
     super.initState();
-    // Skip to step 1 if break is missing
-    if (!widget.workSession.hasRequiredBreak) {
-      _currentStep = 0;
-    } else {
-      _currentStep = 1;
+    // Always start at step 0
+    _currentStep = 0;
+
+    // Check if this is SMART mode and load categorization
+    _hasSmartMode = widget.workSession.currentEntry?.workType == 'SMART';
+    if (_hasSmartMode) {
+      _loadCategorization();
     }
+  }
+
+  Future<void> _loadCategorization() async {
+    final authService = context.read<AuthService>();
+    final entryId = widget.workSession.currentEntry?.id;
+
+    if (entryId == null || authService.token == null) return;
+
+    setState(() => _isLoadingCategorization = true);
+
+    final service = WorkCategorizationService();
+    final result = await service.categorizeWorkDay(entryId, authService.token!);
+
+    setState(() {
+      _categorizationResult = result;
+      _isLoadingCategorization = false;
+    });
   }
 
   String _formatDuration(Duration duration) {
@@ -43,6 +71,10 @@ class _EndDayWizardState extends State<EndDayWizard> {
           onStepContinue: _handleContinue,
           onStepCancel: _handleCancel,
           controlsBuilder: (context, details) {
+            int totalSteps = widget.workSession.hasRequiredBreak ? 1 : 2;
+            if (_hasSmartMode) totalSteps++; // Add GPS categorization step
+            final isLastStep = _currentStep >= totalSteps - 1;
+
             return Padding(
               padding: const EdgeInsets.only(top: 16.0),
               child: Row(
@@ -56,7 +88,7 @@ class _EndDayWizardState extends State<EndDayWizard> {
                   ElevatedButton(
                     onPressed: details.onStepContinue,
                     child: Text(
-                      _currentStep == 1 ? 'Afslut Dag' : 'Næste',
+                      isLastStep ? 'Afslut Dag' : 'Næste',
                     ),
                   ),
                 ],
@@ -64,19 +96,27 @@ class _EndDayWizardState extends State<EndDayWizard> {
             );
           },
           steps: [
-            // Step 1: Check for break
+            // Step 1: Check for break (if needed)
             if (!widget.workSession.hasRequiredBreak)
               Step(
                 title: const Text('Pause påkrævet'),
                 content: _buildBreakStep(),
-                isActive: _currentStep == 0,
+                isActive: true,
               ),
 
-            // Step 2: Summary and confirmation
+            // Step 2: GPS Categorization (if SMART mode)
+            if (_hasSmartMode)
+              Step(
+                title: const Text('GPS Kategorisering'),
+                content: _buildCategorizationStep(),
+                isActive: true,
+              ),
+
+            // Step 3: Summary and confirmation
             Step(
               title: const Text('Bekræft afslutning'),
               content: _buildSummaryStep(),
-              isActive: _currentStep == 1,
+              isActive: true,
             ),
           ],
         ),
@@ -264,6 +304,208 @@ class _EndDayWizardState extends State<EndDayWizard> {
     );
   }
 
+  Widget _buildCategorizationStep() {
+    if (_isLoadingCategorization) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(32.0),
+          child: Column(
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(height: 16),
+              Text('Analyserer GPS data...'),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (_categorizationResult == null || _categorizationResult!.workPeriods.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.grey[100],
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: const Column(
+          children: [
+            Icon(Icons.info_outline, size: 48, color: Colors.grey),
+            SizedBox(height: 12),
+            Text(
+              'Ingen GPS data tilgængelig',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 8),
+            Text(
+              'GPS tracking var ikke aktiv eller ingen data blev indsamlet.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(Icons.auto_awesome, color: Colors.blue[700]),
+            const SizedBox(width: 8),
+            const Text(
+              'GPS Kategorisering',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        const Text(
+          'Baseret på din GPS data, har vi kategoriseret din arbejdsdag:',
+          style: TextStyle(fontSize: 12, color: Colors.grey),
+        ),
+        const SizedBox(height: 16),
+        ...List.generate(
+          _categorizationResult!.workPeriods.length,
+          (index) {
+            final period = _categorizationResult!.workPeriods[index];
+            return _buildWorkPeriodCard(period, index);
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildWorkPeriodCard(WorkPeriod period, int index) {
+    final startTime = period.startTime.toLocal();
+    final endTime = period.endTime.toLocal();
+    final duration = endTime.difference(startTime);
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.blue[100],
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    'Periode ${index + 1}',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.blue[900],
+                    ),
+                  ),
+                ),
+                const Spacer(),
+                Text(
+                  _formatDuration(duration),
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                const Icon(Icons.access_time, size: 16),
+                const SizedBox(width: 4),
+                Text(
+                  '${startTime.hour.toString().padLeft(2, '0')}:${startTime.minute.toString().padLeft(2, '0')} - ${endTime.hour.toString().padLeft(2, '0')}:${endTime.minute.toString().padLeft(2, '0')}',
+                  style: const TextStyle(fontSize: 12),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Icon(
+                  _getWorkTypeIcon(period.suggestedTaskType),
+                  size: 20,
+                  color: Colors.green[700],
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  _getWorkTypeName(period.suggestedTaskType),
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const Spacer(),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.green[50],
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: Colors.green),
+                  ),
+                  child: Text(
+                    '${period.confidence}%',
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: Colors.green[900],
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            if (period.reason != null) ...[
+              const SizedBox(height: 6),
+              Text(
+                period.reason!,
+                style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  IconData _getWorkTypeIcon(String workType) {
+    switch (workType) {
+      case 'DRIVING':
+        return Icons.local_shipping;
+      case 'TERMINAL_WORK':
+        return Icons.business;
+      case 'DISTRIBUTION':
+        return Icons.delivery_dining;
+      case 'LOADING':
+        return Icons.archive;
+      case 'UNLOADING':
+        return Icons.unarchive;
+      case 'MOVING':
+        return Icons.moving;
+      default:
+        return Icons.work;
+    }
+  }
+
+  String _getWorkTypeName(String workType) {
+    switch (workType) {
+      case 'DRIVING':
+        return 'Kørsel';
+      case 'DISTRIBUTION':
+        return 'Distribution';
+      case 'TERMINAL_WORK':
+        return 'Terminalarbejde';
+      case 'MOVING':
+        return 'Flytning';
+      case 'LOADING':
+        return 'Lastning';
+      case 'UNLOADING':
+        return 'Losning';
+      default:
+        return workType;
+    }
+  }
+
   String _calculateBreakDuration() {
     if (_breakStart == null || _breakEnd == null) return '';
 
@@ -281,8 +523,12 @@ class _EndDayWizardState extends State<EndDayWizard> {
   }
 
   void _handleContinue() async {
-    // Step 0: Handle break input
-    if (_currentStep == 0 && !widget.workSession.hasRequiredBreak) {
+    // Calculate total steps dynamically
+    final totalSteps = widget.workSession.hasRequiredBreak ? 1 : 2;
+    final isLastStep = _currentStep >= totalSteps - 1;
+
+    // If on break step (and break is missing), handle break input
+    if (!widget.workSession.hasRequiredBreak && _currentStep == 0) {
       if (_addBreak) {
         if (_breakStart == null || _breakEnd == null) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -329,13 +575,13 @@ class _EndDayWizardState extends State<EndDayWizard> {
 
       // Move to next step
       setState(() {
-        _currentStep = 1;
+        _currentStep++;
       });
       return;
     }
 
     // Final step: Confirm and close
-    if (_currentStep == 1) {
+    if (isLastStep) {
       Navigator.of(context).pop(true);
     }
   }

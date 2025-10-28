@@ -6,6 +6,8 @@ class TimeEntry {
   final DateTime? endTime;
   final String? workType;
   final String? location;
+  final String? route;
+  final String? comment;
   final String? description;
   final double? hoursWorked;
   final String status;
@@ -21,6 +23,8 @@ class TimeEntry {
     this.endTime,
     this.workType,
     this.location,
+    this.route,
+    this.comment,
     this.description,
     this.hoursWorked,
     this.status = 'DRAFT',
@@ -68,8 +72,10 @@ class TimeEntry {
       date: DateTime.parse(json['date']),
       startTime: json['startTime'] != null ? DateTime.parse(json['startTime']) : null,
       endTime: json['endTime'] != null ? DateTime.parse(json['endTime']) : null,
-      workType: json['workType'],
+      workType: json['taskType'] ?? json['workType'],  // Backend uses taskType
       location: json['location'],
+      route: json['route'],
+      comment: json['comment'],
       description: json['description'],
       hoursWorked: json['hoursWorked']?.toDouble(),
       status: json['status'] ?? 'DRAFT',
@@ -88,8 +94,10 @@ class TimeEntry {
       'date': date.toIso8601String(),
       if (startTime != null) 'startTime': startTime!.toIso8601String(),
       if (endTime != null) 'endTime': endTime!.toIso8601String(),
-      if (workType != null) 'workType': workType,
+      if (workType != null) 'taskType': workType,  // Backend expects taskType
       if (location != null) 'location': location,
+      if (route != null) 'route': route,
+      if (comment != null) 'comment': comment,
       if (description != null) 'description': description,
       if (hoursWorked != null) 'hoursWorked': hoursWorked,
       'status': status,
@@ -107,6 +115,8 @@ class TimeEntry {
     DateTime? endTime,
     String? workType,
     String? location,
+    String? route,
+    String? comment,
     String? description,
     double? hoursWorked,
     String? status,
@@ -122,6 +132,8 @@ class TimeEntry {
       endTime: endTime ?? this.endTime,
       workType: workType ?? this.workType,
       location: location ?? this.location,
+      route: route ?? this.route,
+      comment: comment ?? this.comment,
       description: description ?? this.description,
       hoursWorked: hoursWorked ?? this.hoursWorked,
       status: status ?? this.status,
@@ -162,10 +174,18 @@ class BreakPeriod {
   }
 
   Map<String, dynamic> toJson() {
+    // Import TimeEntryService for formatDateTime
+    final formatDateTime = (DateTime dt) {
+      final utc = dt.toUtc();
+      final iso = utc.toIso8601String();
+      final milliseconds = (utc.millisecond).toString().padLeft(3, '0');
+      return '${iso.substring(0, 19)}.${milliseconds}Z';
+    };
+
     return {
       if (id != null) 'id': id,
-      'startTime': startTime.toIso8601String(),
-      if (endTime != null) 'endTime': endTime!.toIso8601String(),
+      'startTime': formatDateTime(startTime),
+      if (endTime != null) 'endTime': formatDateTime(endTime!),
       'type': type,
     };
   }

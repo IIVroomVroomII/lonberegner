@@ -6,6 +6,16 @@ import '../models/time_entry.dart';
 class TimeEntryService {
   static const String baseUrl = 'https://lonberegner-62a2db4ebd03.herokuapp.com/api/v1';
 
+  // Format DateTime to Prisma-compatible ISO-8601 (milliseconds + Z)
+  static String formatDateTime(DateTime dateTime) {
+    // Convert to UTC and format with milliseconds (3 digits) and Z suffix
+    final utc = dateTime.toUtc();
+    final iso = utc.toIso8601String();
+    // Replace microseconds (6 digits) with milliseconds (3 digits)
+    final milliseconds = (utc.millisecond).toString().padLeft(3, '0');
+    return '${iso.substring(0, 19)}.${milliseconds}Z';
+  }
+
   Future<String?> _getToken() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('token');
@@ -51,6 +61,8 @@ class TimeEntryService {
     required String employeeId,
     String? workType,
     String? location,
+    String? route,
+    String? comment,
   }) async {
     try {
       final headers = await _getHeaders();
@@ -59,9 +71,11 @@ class TimeEntryService {
       final body = json.encode({
         'employeeId': employeeId,
         'date': now.toIso8601String().split('T')[0],
-        'startTime': now.toIso8601String(),
+        'startTime': TimeEntryService.formatDateTime(now),
         'taskType': workType ?? 'DRIVING',
-        'location': location,
+        if (location != null) 'location': location,
+        if (route != null) 'route': route,
+        if (comment != null) 'comment': comment,
       });
 
       final response = await http.post(
@@ -88,20 +102,25 @@ class TimeEntryService {
       final now = DateTime.now();
 
       final body = json.encode({
-        'endTime': now.toIso8601String(),
+        'endTime': TimeEntryService.formatDateTime(now),
         'status': 'PENDING',
       });
 
+      print('Ending work for entry: $entryId');
       final response = await http.put(
         Uri.parse('$baseUrl/time-entries/$entryId'),
         headers: headers,
         body: body,
       );
 
+      print('End work response: ${response.statusCode}');
+      print('End work body: ${response.body}');
+
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         return TimeEntry.fromJson(data['data']['timeEntry']);
       }
+      print('End work failed with status: ${response.statusCode}');
       return null;
     } catch (e) {
       print('Error ending work: $e');
@@ -268,6 +287,22 @@ class TimeEntryService {
     } catch (e) {
       print('Error updating entry: $e');
       return null;
+    }
+  }
+
+  // Delete entry
+  Future<bool> deleteEntry(String entryId) async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http.delete(
+        Uri.parse('$baseUrl/time-entries/$entryId'),
+        headers: headers,
+      );
+
+      return response.statusCode == 200 || response.statusCode == 204;
+    } catch (e) {
+      print('Error deleting entry: $e');
+      return false;
     }
   }
 }
