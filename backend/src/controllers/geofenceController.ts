@@ -1,100 +1,63 @@
-import { Request, Response, NextFunction } from 'express';
-import { AppError } from '../middleware/errorHandler';
+import { Request, Response } from 'express';
 import prisma from '../config/database';
-import { logger } from '../config/logger';
+import { Decimal } from '@prisma/client/runtime/library';
 
-export const createGeofence = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+export const createGeofence = async (req: Request, res: Response) => {
   try {
-    const {
-      name,
-      description,
-      latitude,
-      longitude,
-      radius,
-      taskType,
-      employeeId,
-      calculationProfileId,
-      isActive = true,
-    } = req.body;
-
-    // Validate that either employeeId or calculationProfileId is provided, but not both
-    if (employeeId && calculationProfileId) {
-      throw new AppError('Geofence kan kun tilknyttes enten medarbejder eller beregningsprofil, ikke begge', 400);
-    }
-
-    if (!employeeId && !calculationProfileId) {
-      throw new AppError('Geofence skal tilknyttes enten en medarbejder eller beregningsprofil', 400);
-    }
-
-    // Verify employee exists if employeeId is provided
-    if (employeeId) {
-      const employee = await prisma.employee.findUnique({
-        where: { id: employeeId },
-      });
-
-      if (!employee) {
-        throw new AppError('Medarbejder ikke fundet', 404);
-      }
-    }
-
-    // Verify calculation profile exists if calculationProfileId is provided
-    if (calculationProfileId) {
-      const profile = await prisma.calculationProfile.findUnique({
-        where: { id: calculationProfileId },
-      });
-
-      if (!profile) {
-        throw new AppError('Beregningsprofil ikke fundet', 404);
-      }
-    }
+    const { name, description, latitude, longitude, radius, taskType, employeeId, calculationProfileId, isActive } = req.body;
 
     const geofence = await prisma.geofence.create({
       data: {
         name,
         description,
-        latitude,
-        longitude,
+        latitude: new Decimal(latitude),
+        longitude: new Decimal(longitude),
         radius,
         taskType,
         employeeId,
         calculationProfileId,
-        isActive,
+        isActive: isActive ?? true,
+      },
+      include: {
+        employee: {
+          select: {
+            id: true,
+            employeeNumber: true,
+            user: { select: { name: true } },
+          },
+        },
+        calculationProfile: { select: { id: true, name: true } },
       },
     });
 
-    logger.info(`Geofence oprettet: ${geofence.id} - ${geofence.name}`);
-
     res.status(201).json({
-      status: 'success',
-      data: { geofence },
+      success: true,
+      data: geofence,
     });
-  } catch (error) {
-    next(error);
+  } catch (error: any) {
+    console.error('Error creating geofence:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Fejl ved oprettelse af geofence',
+      error: error.message,
+    });
   }
 };
 
-export const listGeofences = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+export const listGeofences = async (req: Request, res: Response) => {
   try {
     const { employeeId, calculationProfileId, isActive } = req.query;
 
     const where: any = {};
-
+    
     if (employeeId) {
       where.employeeId = employeeId as string;
     }
-
+    
     if (calculationProfileId) {
       where.calculationProfileId = calculationProfileId as string;
     }
-
+    
     if (isActive !== undefined) {
       where.isActive = isActive === 'true';
     }
@@ -106,35 +69,30 @@ export const listGeofences = async (
           select: {
             id: true,
             employeeNumber: true,
-            userId: true,
+            user: { select: { name: true } },
           },
         },
-        calculationProfile: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
+        calculationProfile: { select: { id: true, name: true } },
       },
-      orderBy: {
-        createdAt: 'desc',
-      },
+      orderBy: { name: 'asc' },
     });
 
-    res.json({
-      status: 'success',
-      data: { geofences },
+    res.status(200).json({
+      success: true,
+      data: geofences,
+      count: geofences.length,
     });
-  } catch (error) {
-    next(error);
+  } catch (error: any) {
+    console.error('Error listing geofences:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Fejl ved hentning af geofences',
+      error: error.message,
+    });
   }
 };
 
-export const getGeofence = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+export const getGeofence = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
@@ -145,168 +103,113 @@ export const getGeofence = async (
           select: {
             id: true,
             employeeNumber: true,
-            userId: true,
+            user: { select: { name: true } },
           },
         },
-        calculationProfile: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
+        calculationProfile: { select: { id: true, name: true } },
       },
     });
 
     if (!geofence) {
-      throw new AppError('Geofence ikke fundet', 404);
+      return res.status(404).json({
+        success: false,
+        message: 'Geofence ikke fundet',
+      });
     }
 
-    res.json({
-      status: 'success',
-      data: { geofence },
+    return res.status(200).json({
+      success: true,
+      data: geofence,
     });
-  } catch (error) {
-    next(error);
+  } catch (error: any) {
+    console.error('Error getting geofence:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Fejl ved hentning af geofence',
+      error: error.message,
+    });
   }
 };
 
-export const updateGeofence = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+export const updateGeofence = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const updates = req.body;
+    const { name, description, latitude, longitude, radius, taskType, employeeId, calculationProfileId, isActive } = req.body;
 
-    // Don't allow changing employeeId or calculationProfileId after creation
-    delete updates.employeeId;
-    delete updates.calculationProfileId;
+    // Check if geofence exists
+    const existingGeofence = await prisma.geofence.findUnique({ where: { id } });
+    if (!existingGeofence) {
+      return res.status(404).json({
+        success: false,
+        message: 'Geofence ikke fundet',
+      });
+    }
+
+    const updateData: any = {};
+    if (name !== undefined) updateData.name = name;
+    if (description !== undefined) updateData.description = description;
+    if (latitude !== undefined) updateData.latitude = new Decimal(latitude);
+    if (longitude !== undefined) updateData.longitude = new Decimal(longitude);
+    if (radius !== undefined) updateData.radius = radius;
+    if (taskType !== undefined) updateData.taskType = taskType;
+    if (employeeId !== undefined) updateData.employeeId = employeeId;
+    if (calculationProfileId !== undefined) updateData.calculationProfileId = calculationProfileId;
+    if (isActive !== undefined) updateData.isActive = isActive;
 
     const geofence = await prisma.geofence.update({
       where: { id },
-      data: updates,
+      data: updateData,
+      include: {
+        employee: {
+          select: {
+            id: true,
+            employeeNumber: true,
+            user: { select: { name: true } },
+          },
+        },
+        calculationProfile: { select: { id: true, name: true } },
+      },
     });
 
-    logger.info(`Geofence opdateret: ${geofence.id} - ${geofence.name}`);
-
-    res.json({
-      status: 'success',
-      data: { geofence },
+    return res.status(200).json({
+      success: true,
+      data: geofence,
     });
-  } catch (error) {
-    next(error);
+  } catch (error: any) {
+    console.error('Error updating geofence:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Fejl ved opdatering af geofence',
+      error: error.message,
+    });
   }
 };
 
-export const deleteGeofence = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+export const deleteGeofence = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
-    await prisma.geofence.delete({
-      where: { id },
-    });
+    // Check if geofence exists
+    const existingGeofence = await prisma.geofence.findUnique({ where: { id } });
+    if (!existingGeofence) {
+      return res.status(404).json({
+        success: false,
+        message: 'Geofence ikke fundet',
+      });
+    }
 
-    logger.info(`Geofence slettet: ${id}`);
+    await prisma.geofence.delete({ where: { id } });
 
-    res.json({
-      status: 'success',
+    return res.status(200).json({
+      success: true,
       message: 'Geofence slettet',
     });
-  } catch (error) {
-    next(error);
-  }
-};
-
-// Check if a given coordinate is within any active geofence for an employee
-export const checkGeofence = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  try {
-    const { employeeId, latitude, longitude } = req.body;
-
-    if (!employeeId || latitude === undefined || longitude === undefined) {
-      throw new AppError('employeeId, latitude og longitude er påkrævet', 400);
-    }
-
-    // Get all active geofences for this employee (both direct and via calculation profile)
-    const employee = await prisma.employee.findUnique({
-      where: { id: employeeId },
-      include: {
-        geofences: {
-          where: { isActive: true },
-        },
-        calculationProfile: {
-          include: {
-            geofences: {
-              where: { isActive: true },
-            },
-          },
-        },
-      },
+  } catch (error: any) {
+    console.error('Error deleting geofence:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Fejl ved sletning af geofence',
+      error: error.message,
     });
-
-    if (!employee) {
-      throw new AppError('Medarbejder ikke fundet', 404);
-    }
-
-    // Combine geofences from both sources
-    const allGeofences = [
-      ...employee.geofences,
-      ...(employee.calculationProfile?.geofences || []),
-    ];
-
-    // Calculate distance using Haversine formula
-    const calculateDistance = (
-      lat1: number,
-      lon1: number,
-      lat2: number,
-      lon2: number
-    ): number => {
-      const R = 6371e3; // Earth radius in meters
-      const φ1 = (lat1 * Math.PI) / 180;
-      const φ2 = (lat2 * Math.PI) / 180;
-      const Δφ = ((lat2 - lat1) * Math.PI) / 180;
-      const Δλ = ((lon2 - lon1) * Math.PI) / 180;
-
-      const a =
-        Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-        Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-      return R * c; // Distance in meters
-    };
-
-    // Check each geofence
-    const matchingGeofences = allGeofences.filter((geofence) => {
-      const distance = calculateDistance(
-        parseFloat(geofence.latitude.toString()),
-        parseFloat(geofence.longitude.toString()),
-        latitude,
-        longitude
-      );
-
-      return distance <= geofence.radius;
-    });
-
-    res.json({
-      status: 'success',
-      data: {
-        isInGeofence: matchingGeofences.length > 0,
-        matchingGeofences: matchingGeofences.map((g) => ({
-          id: g.id,
-          name: g.name,
-          taskType: g.taskType,
-        })),
-      },
-    });
-  } catch (error) {
-    next(error);
   }
 };

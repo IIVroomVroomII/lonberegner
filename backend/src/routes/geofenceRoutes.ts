@@ -1,35 +1,39 @@
 import { Router } from 'express';
+import { authenticate } from '../middleware/auth';
+import { validate } from '../middleware/validate';
 import {
   createGeofence,
-  updateGeofence,
-  getGeofence,
   listGeofences,
+  getGeofence,
+  updateGeofence,
   deleteGeofence,
-  checkGeofence,
 } from '../controllers/geofenceController';
-import { authenticate, authorize } from '../middleware/auth';
-import { validate } from '../middleware/validate';
 import {
   createGeofenceSchema,
   updateGeofenceSchema,
-  getGeofenceSchema,
   deleteGeofenceSchema,
-  checkGeofenceSchema,
+  getGeofenceSchema,
+  listGeofencesSchema,
 } from '../validators/geofenceValidators';
 
 const router = Router();
 
-// All routes require authentication
+// All geofence routes require authentication
 router.use(authenticate);
 
-// CRUD operations
+// Create a new geofence
 router.post('/', validate(createGeofenceSchema), createGeofence);
-router.get('/', listGeofences);
-router.get('/:id', validate(getGeofenceSchema), getGeofence);
-router.put('/:id', validate(updateGeofenceSchema), updateGeofence);
-router.delete('/:id', authorize('ADMIN', 'PAYROLL_MANAGER'), validate(deleteGeofenceSchema), deleteGeofence);
 
-// Check if coordinate is within geofence
-router.post('/check', validate(checkGeofenceSchema), checkGeofence);
+// List all geofences (with optional filtering)
+router.get('/', validate(listGeofencesSchema), listGeofences);
+
+// Get a specific geofence
+router.get('/:id', validate(getGeofenceSchema), getGeofence);
+
+// Update a geofence
+router.put('/:id', validate(updateGeofenceSchema), updateGeofence);
+
+// Delete a geofence
+router.delete('/:id', validate(deleteGeofenceSchema), deleteGeofence);
 
 export default router;
