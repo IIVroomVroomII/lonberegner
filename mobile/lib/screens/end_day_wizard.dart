@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/work_session_provider.dart';
 import '../services/auth_service.dart';
 import '../services/work_categorization_service.dart';
+import '../services/time_entry_service.dart';
 import '../models/work_categorization.dart';
 
 class EndDayWizard extends StatefulWidget {
@@ -24,6 +25,8 @@ class _EndDayWizardState extends State<EndDayWizard> {
   bool _isLoadingCategorization = false;
   CategorizationResult? _categorizationResult;
   bool _hasSmartMode = false;
+  Map<int, String> _periodEdits = {}; // Track user edits to period work types
+  String? _selectedPrimaryWorkType; // User-selected primary work type
 
   @override
   void initState() {
@@ -52,6 +55,20 @@ class _EndDayWizardState extends State<EndDayWizard> {
     setState(() {
       _categorizationResult = result;
       _isLoadingCategorization = false;
+      // Calculate primary work type based on longest duration
+      if (result != null && result.workPeriods.isNotEmpty) {
+        var longestPeriod = result.workPeriods.first;
+        var longestDuration = longestPeriod.endTime.difference(longestPeriod.startTime);
+
+        for (var period in result.workPeriods) {
+          var duration = period.endTime.difference(period.startTime);
+          if (duration > longestDuration) {
+            longestDuration = duration;
+            longestPeriod = period;
+          }
+        }
+        _selectedPrimaryWorkType = longestPeriod.suggestedTaskType;
+      }
     });
   }
 
@@ -365,6 +382,75 @@ class _EndDayWizardState extends State<EndDayWizard> {
           style: TextStyle(fontSize: 12, color: Colors.grey),
         ),
         const SizedBox(height: 16),
+
+        // Primary work type selector
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.blue[50],
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.blue),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.work, color: Colors.blue[700], size: 20),
+                  const SizedBox(width: 8),
+                  const Text(
+                    'Hovedarbejdstype for dagen',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              DropdownButtonFormField<String>(
+                value: _selectedPrimaryWorkType,
+                decoration: InputDecoration(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(4)),
+                  filled: true,
+                  fillColor: Colors.white,
+                ),
+                items: [
+                  'DRIVING',
+                  'DISTRIBUTION',
+                  'TERMINAL_WORK',
+                  'MOVING',
+                  'LOADING',
+                  'UNLOADING'
+                ].map((type) => DropdownMenuItem(
+                  value: type,
+                  child: Row(
+                    children: [
+                      Icon(_getWorkTypeIcon(type), size: 18),
+                      const SizedBox(width: 8),
+                      Text(_getWorkTypeName(type)),
+                    ],
+                  ),
+                )).toList(),
+                onChanged: (value) {
+                  setState(() {
+                    _selectedPrimaryWorkType = value;
+                  });
+                },
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Dette vil være arbejdstypen der gemmes for hele dagen',
+                style: TextStyle(fontSize: 11, color: Colors.grey[700]),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        const Text(
+          'Detaljeret periodeoversigt:',
+          style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
         ...List.generate(
           _categorizationResult!.workPeriods.length,
           (index) {
@@ -524,11 +610,19 @@ class _EndDayWizardState extends State<EndDayWizard> {
 
   void _handleContinue() async {
     // Calculate total steps dynamically
-    final totalSteps = widget.workSession.hasRequiredBreak ? 1 : 2;
+    int totalSteps = widget.workSession.hasRequiredBreak ? 1 : 2;
+    if (_hasSmartMode) totalSteps++; // Add GPS categorization step
     final isLastStep = _currentStep >= totalSteps - 1;
 
+    // Step index calculation
+    int breakStepIndex = widget.workSession.hasRequiredBreak ? -1 : 0;
+    int gpsStepIndex = _hasSmartMode
+        ? (widget.workSession.hasRequiredBreak ? 0 : 1)
+        : -1;
+    int summaryStepIndex = totalSteps - 1;
+
     // If on break step (and break is missing), handle break input
-    if (!widget.workSession.hasRequiredBreak && _currentStep == 0) {
+    if (_currentStep == breakStepIndex && breakStepIndex >= 0) {
       if (_addBreak) {
         if (_breakStart == null || _breakEnd == null) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -569,6 +663,33 @@ class _EndDayWizardState extends State<EndDayWizard> {
               ),
             );
           }
+          return;
+        }
+      }
+
+      // Move to next step
+      setState(() {
+        _currentStep++;
+      });
+      return;
+    }
+
+    // If on GPS categorization step, update time entry with selected work type
+    if (_currentStep == gpsStepIndex && gpsStepIndex >= 0) {
+      if (_selectedPrimaryWorkType != null && widget.workSession.currentEntry?.id != null) {
+        final service = TimeEntryService();
+        final updated = await service.updateEntry(
+          widget.workSession.currentEntry!.id!,
+          {'taskType': _selectedPrimaryWorkType},
+        );
+
+        if (updated == null && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Kunne ikke opdatere arbejdstype'),
+              backgroundColor: Colors.red,
+            ),
+          );
           return;
         }
       }

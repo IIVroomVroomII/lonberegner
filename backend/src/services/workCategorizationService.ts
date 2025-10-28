@@ -26,8 +26,8 @@ interface CategorizationResult {
 export class WorkCategorizationService {
   // Tærskelværdier for kategorisering
   private static readonly STATIONARY_SPEED_THRESHOLD = 1.5; // m/s ≈ 5.4 km/h
-  private static readonly DRIVING_SPEED_THRESHOLD = 8; // m/s ≈ 29 km/h
-  private static readonly MIN_PERIOD_DURATION = 5 * 60 * 1000; // 5 minutter i millisekunder
+  private static readonly DRIVING_SPEED_THRESHOLD = 3.5; // m/s ≈ 12.6 km/h (sænket for bedre detektion)
+  private static readonly MIN_PERIOD_DURATION = 3 * 60 * 1000; // 3 minutter i millisekunder
 
   /**
    * Analyserer GPS data for en arbejdsdag og foreslår arbejdstyper
