@@ -19,12 +19,14 @@ import apiKeyRoutes from './apiKeyRoutes';
 import geofenceRoutes from './geofenceRoutes';
 import gpsTrackingRoutes from './gpsTrackingRoutes';
 import workCategorizationRoutes from './workCategorizationRoutes';
+import timeEntryCategoryRoutes from './timeEntryCategoryRoutes';
 
 const router = Router();
 
 // Core routes
 router.use('/auth', authRoutes);
 router.use('/time-entries', timeEntryRoutes);
+router.use('/time-entries-category', timeEntryCategoryRoutes);
 router.use('/payrolls', payrollRoutes);
 router.use('/employees', employeeRoutes);
 router.use('/dashboard', dashboardRoutes);
