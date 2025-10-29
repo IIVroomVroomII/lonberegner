@@ -12,18 +12,18 @@ datasource db {
 
 // Bruger model - både administratorer og medarbejdere
 model User {
-  id           String   @id @default(uuid())
-  email        String?   @unique // Optional - kun for ADMIN/PAYROLL_MANAGER
-  passwordHash String? // Optional - kun for ADMIN/PAYROLL_MANAGER
-  employeeNumber String? @unique // 4-cifret nummer for EMPLOYEE
-  pinHash      String? // 4-cifret PIN (hashed) for EMPLOYEE
-  name         String
-  role         UserRole @default(EMPLOYEE)
-  teamId       String?
-  teamRole     String? // Rolle inden for teamet
-  isActive     Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id             String   @id @default(uuid())
+  email          String?  @unique // Optional - kun for ADMIN/PAYROLL_MANAGER
+  passwordHash   String? // Optional - kun for ADMIN/PAYROLL_MANAGER
+  employeeNumber String?  @unique // 4-cifret nummer for EMPLOYEE
+  pinHash        String? // 4-cifret PIN (hashed) for EMPLOYEE
+  name           String
+  role           UserRole @default(EMPLOYEE)
+  teamId         String?
+  teamRole       String? // Rolle inden for teamet
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   employee  Employee?
   auditLogs AuditLog[]
@@ -150,7 +150,7 @@ model TimeEntry {
   startTime        DateTime
   endTime          DateTime?
   breakDuration    Int             @default(0) // I minutter
-  breaks           Json?           // Array of break periods with startTime, endTime, type
+  breaks           Json? // Array of break periods with startTime, endTime, type
   location         String?
   route            String?
   taskType         TaskType
@@ -350,37 +350,37 @@ model AuditLog {
 
 // Integration konfiguration til lønsystemer
 model IntegrationConfig {
-  id          String          @id @default(uuid())
-  teamId      String
-  name        String
-  type        IntegrationType
+  id     String          @id @default(uuid())
+  teamId String
+  name   String
+  type   IntegrationType
 
   // API konfiguration
-  apiEndpoint String?
-  apiKey      String? // Krypteret
-  partnerId   String? // For Dataløn
+  apiEndpoint   String?
+  apiKey        String? // Krypteret
+  partnerId     String? // For Dataløn
   partnerSecret String? // Krypteret, for Dataløn
-  appId       String? // For Dataløn
-  username    String?
-  password    String? // Krypteret
+  appId         String? // For Dataløn
+  username      String?
+  password      String? // Krypteret
 
   // Status
-  isActive    Boolean         @default(false)
-  status      IntegrationConfigStatus @default(NOT_CONFIGURED)
+  isActive Boolean                 @default(false)
+  status   IntegrationConfigStatus @default(NOT_CONFIGURED)
 
   // Ekstra konfiguration (JSON)
-  config      Json? // Field mappings, sync settings, etc.
+  config Json? // Field mappings, sync settings, etc.
 
   // Sync og test
-  lastSyncAt     DateTime?
-  lastTestedAt   DateTime?
-  lastTestSuccess Boolean?
+  lastSyncAt       DateTime?
+  lastTestedAt     DateTime?
+  lastTestSuccess  Boolean?
   lastErrorMessage String?
 
   // Employee sync konfiguration
-  syncEmployees Boolean @default(false)
+  syncEmployees   Boolean @default(false)
   syncTimeEntries Boolean @default(false)
-  syncPayroll Boolean @default(false)
+  syncPayroll     Boolean @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -646,7 +646,7 @@ model Team {
   // Onboarding tracking
   onboardingCompleted      Boolean @default(false)
   currentOnboardingStep    Int     @default(0)
-  onboardingStepsCompleted Json?   // Array of completed step IDs
+  onboardingStepsCompleted Json? // Array of completed step IDs
 
   calculationProfiles CalculationProfile[]
   subscription        Subscription?
@@ -664,7 +664,7 @@ model Subscription {
   teamId String @unique
 
   // Stripe integration
-  stripeSubscriptionId   String  @unique
+  stripeSubscriptionId   String   @unique
   stripeCustomerId       String
   stripePriceId          String
   stripeCurrentPeriodEnd DateTime
@@ -673,11 +673,11 @@ model Subscription {
   status SubscriptionStatus @default(TRIALING)
 
   // Trial information
-  trialEnd DateTime?
+  trialEnd  DateTime?
   trialType TrialType @default(STANDARD) // STANDARD (7 days) eller EARLY_ADOPTER (60 days)
 
   // Billing
-  cancelAtPeriodEnd Boolean  @default(false)
+  cancelAtPeriodEnd Boolean   @default(false)
   canceledAt        DateTime?
   endedAt           DateTime?
 
@@ -968,28 +968,28 @@ enum ChatRole {
 
 // API Keys - for programmatic access
 model ApiKey {
-  id          String   @id @default(uuid())
-  teamId      String
-  name        String // Beskrivende navn for nøglen
-  keyHash     String   @unique // Hashed API key
-  keyPrefix   String // Første 8 karakterer for visning (fx "sk_live_12345678...")
+  id        String @id @default(uuid())
+  teamId    String
+  name      String // Beskrivende navn for nøglen
+  keyHash   String @unique // Hashed API key
+  keyPrefix String // Første 8 karakterer for visning (fx "sk_live_12345678...")
 
   // Permissions
-  scopes      String[] // Array af scopes/permissions, fx ["read:employees", "write:timeEntries"]
+  scopes String[] // Array af scopes/permissions, fx ["read:employees", "write:timeEntries"]
 
   // Status
-  isActive    Boolean  @default(true)
-  lastUsedAt  DateTime?
-  expiresAt   DateTime? // Optional expiration
+  isActive   Boolean   @default(true)
+  lastUsedAt DateTime?
+  expiresAt  DateTime? // Optional expiration
 
   // Metadata
   createdBy   String? // User ID der oprettede nøglen
   description String?
 
-  team        Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([teamId, isActive])
   @@index([keyHash])
@@ -998,7 +998,7 @@ model ApiKey {
 
 // Geofence - GPS zoner til automatisk arbejdstype kategorisering
 model Geofence {
-  id          String   @id @default(uuid())
+  id          String  @id @default(uuid())
   name        String // fx "Lager", "Terminal", "Værksted"
   description String?
 
@@ -1017,7 +1017,7 @@ model Geofence {
   calculationProfile   CalculationProfile? @relation(fields: [calculationProfileId], references: [id], onDelete: Cascade)
 
   // Status
-  isActive  Boolean @default(true)
+  isActive Boolean @default(true)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1029,7 +1029,7 @@ model Geofence {
 
 // GPS tracking - tracker medarbejderens position under arbejdsdagen
 model GpsTracking {
-  id          String   @id @default(uuid())
+  id          String @id @default(uuid())
   timeEntryId String
 
   // GPS data
@@ -1052,4 +1052,58 @@ model GpsTracking {
   @@index([timeEntryId, timestamp])
   @@index([timestamp])
   @@map("gps_tracking")
+}
+
+// GPS Point - Raw GPS data with offline queue support
+model GPSPoint {
+  id           String   @id @default(uuid())
+  employeeId   String
+  latitude     Decimal  @db.Decimal(10, 8)
+  longitude    Decimal  @db.Decimal(11, 8)
+  accuracy     Decimal  @db.Decimal(10, 2) // I meter
+  timestamp    DateTime
+  batteryLevel Decimal? @db.Decimal(5, 2) // Battery level (0-100)
+  speed        Decimal? @db.Decimal(10, 2) // I m/s
+  heading      Decimal? @db.Decimal(5, 2) // Kompasretning i grader (0-360)
+
+  // Offline sync support
+  clientId   String? // Client-generated UUID for idempotency
+  syncedAt   DateTime?
+  conflictId String?
+
+  // Relations
+  conflict GPSConflict? @relation(fields: [conflictId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([employeeId, timestamp])
+  @@index([syncedAt])
+  @@index([clientId])
+  @@map("gps_points")
+}
+
+// GPS Conflict - Handle sync conflicts for offline GPS data
+model GPSConflict {
+  id           String            @id @default(uuid())
+  employeeId   String
+  clientData   Json // Original client data
+  serverData   Json? // Conflicting server data
+  resolvedData Json? // Final resolved data
+  status       GPSConflictStatus @default(PENDING)
+  resolvedAt   DateTime?
+  resolvedBy   String? // User ID who resolved it
+
+  gpsPoints GPSPoint[]
+
+  createdAt DateTime @default(now())
+
+  @@index([employeeId, status])
+  @@index([status])
+  @@map("gps_conflicts")
+}
+
+enum GPSConflictStatus {
+  PENDING // Awaiting resolution
+  RESOLVED // Conflict resolved
+  REJECTED // Rejected/discarded
 }
