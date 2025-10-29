@@ -15,6 +15,7 @@ import AuditLogsPage from './pages/AuditLogsPage';
 import IntegrationsPage from './pages/IntegrationsPage';
 import AIIntegrationsPage from './pages/AIIntegrationsPage';
 import SubscriptionPage from './pages/SubscriptionPage';
+import GeofencesPage from './pages/GeofencesPage';
 import Layout from './components/Layout';
 
 function App() {
@@ -35,6 +36,7 @@ function App() {
             <Route path="time-entries" element={<TimeEntriesPage />} />
             <Route path="payrolls" element={<PayrollsPage />} />
             <Route path="calculation-profiles" element={<CalculationProfilesPage />} />
+            <Route path="geofences" element={<GeofencesPage />} />
             <Route path="conflicts" element={<ConflictsPage />} />
             <Route path="agreements" element={<AgreementsPage />} />
             <Route path="reports" element={<ReportsPage />} />

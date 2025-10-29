@@ -185,3 +185,12 @@ export const apiKeysAPI = {
   deactivate: (id: string) => api.patch(`/api-keys/${id}/deactivate`),
   delete: (id: string) => api.delete(`/api-keys/${id}`),
 };
+
+// Geofences
+export const geofencesAPI = {
+  list: (params?: any) => api.get('/geofences', { params }),
+  get: (id: string) => api.get(`/geofences/${id}`),
+  create: (data: any) => api.post('/geofences', data),
+  update: (id: string, data: any) => api.put(`/geofences/${id}`, data),
+  delete: (id: string) => api.delete(`/geofences/${id}`),
+};
