@@ -205,22 +205,23 @@ export class GPSQueueService {
     }
 
     // Create GPS point from resolved data
+    const data = resolvedData as QueuedGPSData;
     await prisma.gPSPoint.create({
       data: {
-        clientId: (resolvedData as QueuedGPSData).clientId,
-        employeeId: (resolvedData as QueuedGPSData).employeeId,
-        latitude: new Prisma.Decimal((resolvedData as QueuedGPSData).latitude),
-        longitude: new Prisma.Decimal((resolvedData as QueuedGPSData).longitude),
-        accuracy: new Prisma.Decimal((resolvedData as QueuedGPSData).accuracy),
-        timestamp: new Date((resolvedData as QueuedGPSData).timestamp),
-        batteryLevel: (resolvedData as QueuedGPSData).batteryLevel
-          ? new Prisma.Decimal((resolvedData as QueuedGPSData).batteryLevel)
+        clientId: data.clientId,
+        employeeId: data.employeeId,
+        latitude: new Prisma.Decimal(data.latitude),
+        longitude: new Prisma.Decimal(data.longitude),
+        accuracy: new Prisma.Decimal(data.accuracy),
+        timestamp: new Date(data.timestamp),
+        batteryLevel: data.batteryLevel !== undefined && data.batteryLevel !== null
+          ? new Prisma.Decimal(data.batteryLevel)
           : null,
-        speed: (resolvedData as QueuedGPSData).speed
-          ? new Prisma.Decimal((resolvedData as QueuedGPSData).speed)
+        speed: data.speed !== undefined && data.speed !== null
+          ? new Prisma.Decimal(data.speed)
           : null,
-        heading: (resolvedData as QueuedGPSData).heading
-          ? new Prisma.Decimal((resolvedData as QueuedGPSData).heading)
+        heading: data.heading !== undefined && data.heading !== null
+          ? new Prisma.Decimal(data.heading)
           : null,
         syncedAt: new Date(),
       },
