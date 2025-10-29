@@ -99,3 +99,9 @@ mobile/.dart_tool/
 mobile/.flutter-plugins
 mobile/.flutter-plugins-dependencies
 mobile/.packages
+
+# APK releases
+releases/
+mobile/releases/
+*.apk
+
