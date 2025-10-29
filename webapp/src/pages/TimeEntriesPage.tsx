@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Box, Typography, Button, Chip, IconButton, Tooltip } from '@mui/material';
-import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
+import { Box, Typography, Button, Chip, IconButton, Tooltip, Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem, FormControlLabel, Checkbox } from '@mui/material';
+import { DataGrid, GridColDef, GridRenderCellParams, GridRowSelectionModel } from '@mui/x-data-grid';
 import AddIcon from '@mui/icons-material/Add';
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
 import EditIcon from '@mui/icons-material/Edit';
+import MergeIcon from '@mui/icons-material/MergeType';
+import ContentCutIcon from '@mui/icons-material/ContentCut';
 import { timeEntriesAPI } from '../services/api';
 import { format } from 'date-fns';
 import { da } from 'date-fns/locale';
@@ -56,6 +58,15 @@ export default function TimeEntriesPage() {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingEntryId, setEditingEntryId] = useState<string | null>(null);
+  const [selectedRows, setSelectedRows] = useState<GridRowSelectionModel>([]);
+  const [bulkEditOpen, setBulkEditOpen] = useState(false);
+  const [bulkEditData, setBulkEditData] = useState({
+    taskType: '',
+    location: '',
+    route: '',
+    comment: '',
+    status: '',
+  });
 
   useEffect(() => {
     fetchTimeEntries();
@@ -95,6 +106,31 @@ export default function TimeEntriesPage() {
 
   const handleDialogSuccess = () => {
     fetchTimeEntries();
+  };
+
+  const handleBulkEdit = async () => {
+    if (selectedRows.length === 0) return;
+
+    try {
+      const updates: any = {};
+      if (bulkEditData.taskType) updates.taskType = bulkEditData.taskType;
+      if (bulkEditData.location) updates.location = bulkEditData.location;
+      if (bulkEditData.route) updates.route = bulkEditData.route;
+      if (bulkEditData.comment) updates.comment = bulkEditData.comment;
+      if (bulkEditData.status) updates.status = bulkEditData.status;
+
+      await timeEntriesAPI.bulkEdit({
+        timeEntryIds: selectedRows as string[],
+        updates,
+      });
+
+      setBulkEditOpen(false);
+      setBulkEditData({ taskType: '', location: '', route: '', comment: '', status: '' });
+      setSelectedRows([]);
+      fetchTimeEntries();
+    } catch (error) {
+      console.error('Failed to bulk edit:', error);
+    }
   };
 
   const calculateHours = (startTime: string, endTime: string | null, breakDuration: number) => {
@@ -252,24 +288,36 @@ export default function TimeEntriesPage() {
         >
           Tidsregistreringer
         </Typography>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon sx={{ fontSize: '1rem' }} />}
-          onClick={() => handleOpenDialog()}
-          sx={{
-            py: 0.75,
-            px: 2,
-            fontSize: '0.875rem',
-            fontWeight: 500,
-            backgroundColor: '#7dd3fc',
-            color: '#1e1e1e',
-            '&:hover': {
-              backgroundColor: '#5eadd1',
-            },
-          }}
-        >
-          Ny registrering
-        </Button>
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          {selectedRows.length > 0 && (
+            <Button
+              variant="outlined"
+              startIcon={<EditIcon />}
+              onClick={() => setBulkEditOpen(true)}
+              sx={{ fontSize: '0.875rem' }}
+            >
+              Redigér {selectedRows.length} valgte
+            </Button>
+          )}
+          <Button
+            variant="contained"
+            startIcon={<AddIcon sx={{ fontSize: '1rem' }} />}
+            onClick={() => handleOpenDialog()}
+            sx={{
+              py: 0.75,
+              px: 2,
+              fontSize: '0.875rem',
+              fontWeight: 500,
+              backgroundColor: '#7dd3fc',
+              color: '#1e1e1e',
+              '&:hover': {
+                backgroundColor: '#5eadd1',
+              },
+            }}
+          >
+            Ny registrering
+          </Button>
+        </Box>
       </Box>
 
       <Box
@@ -328,7 +376,9 @@ export default function TimeEntriesPage() {
             },
           }}
           pageSizeOptions={[10, 25, 50]}
-          disableRowSelectionOnClick
+          checkboxSelection
+          onRowSelectionModelChange={(newSelection) => setSelectedRows(newSelection)}
+          rowSelectionModel={selectedRows}
         />
       </Box>
 
@@ -338,6 +388,65 @@ export default function TimeEntriesPage() {
         onSuccess={handleDialogSuccess}
         entryId={editingEntryId}
       />
+
+      <Dialog open={bulkEditOpen} onClose={() => setBulkEditOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Redigér {selectedRows.length} tidsregistreringer</DialogTitle>
+        <DialogContent>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
+            <TextField
+              select
+              label="Arbejdstype (valgfri)"
+              value={bulkEditData.taskType}
+              onChange={(e) => setBulkEditData({ ...bulkEditData, taskType: e.target.value })}
+              fullWidth
+            >
+              <MenuItem value="">-- Ingen ændring --</MenuItem>
+              <MenuItem value="DISTRIBUTION">Distribution</MenuItem>
+              <MenuItem value="TERMINAL_WORK">Terminal</MenuItem>
+              <MenuItem value="DRIVING">Kørsel</MenuItem>
+              <MenuItem value="MOVING">Flytning</MenuItem>
+              <MenuItem value="LOADING">Lastning</MenuItem>
+              <MenuItem value="UNLOADING">Losning</MenuItem>
+            </TextField>
+            <TextField
+              label="Lokation (valgfri)"
+              value={bulkEditData.location}
+              onChange={(e) => setBulkEditData({ ...bulkEditData, location: e.target.value })}
+              fullWidth
+            />
+            <TextField
+              label="Rute (valgfri)"
+              value={bulkEditData.route}
+              onChange={(e) => setBulkEditData({ ...bulkEditData, route: e.target.value })}
+              fullWidth
+            />
+            <TextField
+              label="Kommentar (valgfri)"
+              value={bulkEditData.comment}
+              onChange={(e) => setBulkEditData({ ...bulkEditData, comment: e.target.value })}
+              fullWidth
+              multiline
+              rows={2}
+            />
+            <TextField
+              select
+              label="Status (valgfri)"
+              value={bulkEditData.status}
+              onChange={(e) => setBulkEditData({ ...bulkEditData, status: e.target.value })}
+              fullWidth
+            >
+              <MenuItem value="">-- Ingen ændring --</MenuItem>
+              <MenuItem value="PENDING">Afventer</MenuItem>
+              <MenuItem value="APPROVED">Godkendt</MenuItem>
+              <MenuItem value="REJECTED">Afvist</MenuItem>
+            </TextField>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setBulkEditOpen(false)}>Annuller</Button>
+          <Button onClick={handleBulkEdit} variant="contained">Gem ændringer</Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

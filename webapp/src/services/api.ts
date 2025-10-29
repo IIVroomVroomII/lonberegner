@@ -49,6 +49,11 @@ export const timeEntriesAPI = {
   update: (id: string, data: any) => api.put(`/time-entries/${id}`, data),
   approve: (id: string) => api.patch(`/time-entries/${id}/approve`),
   delete: (id: string) => api.delete(`/time-entries/${id}`),
+  // Manual categorization
+  split: (id: string, data: any) => api.post(`/time-entries-category/${id}/split`, data),
+  merge: (data: any) => api.post('/time-entries-category/merge', data),
+  bulkEdit: (data: any) => api.put('/time-entries-category/bulk-edit', data),
+  getForPeriod: (params: any) => api.get('/time-entries-category/period', { params }),
 };
 
 // Payrolls
